@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+	<fields name="params">
+		<fieldset name="task_params">
+			<field
+				name="date_modifier"
+				type="list"
+				required="true"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_LABEL"
+				default="2"
+				validate="options"
+			>
+				<option value="1">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_ONE_YEAR</option>
+				<option value="2">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TWO_YEAR</option>
+			</field>
+			<field
+				name="categories_to_check"
+				type="category"
+				required="true"
+				label="JCATEGORY"
+				extension="com_content"
+				multiple="true"
+				filter="intarray"
+				class="multipleCategories"
+				layout="joomla.form.field.list-fancy-select"
+				hint="JOPTION_SELECT_CATEGORY"
+				published="1"
+			/>
+			<field
+				name="email"
+				type="text"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_EMAIL_LBL"
+				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_EMAIL_DESC"
+				default=""
+			/>
+			<field
+				name="language_override"
+				type="language"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_LBL"
+				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_DESC"
+				default=""
+				client="administrator"
+			>
+				<option value="">PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_NONE</option>
+			</field>
+		</fieldset>
+	</fields>
+</form>
