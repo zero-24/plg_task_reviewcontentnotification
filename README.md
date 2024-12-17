@@ -26,6 +26,12 @@ You want to translate this extension to your own language? Check out my [Crowdin
 
 This plugin can also been found in the Joomla! Extensions Directory: [ReviewContentNotification by zero24](https://extensions.joomla.org/extension/reviewcontentnotification/)
 
+## Special Thanks
+
+Alain Rihs - @AlainRnet
+
+For giving me the inspiration for the plugin and the initial tests. Thanks 👍
+
 ## Release steps
 
 - `build/build.sh`
