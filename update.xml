@@ -12,7 +12,7 @@
 		<downloads>
 			<downloadurl type="full" format="zip">https://github.com/zero-24/plg_task_reviewcontentnotification/releases/download/1.0.0/plg_task_reviewcontentnotification.zip</downloadurl>
 		</downloads>
-		<sha512>2a7d62b1efcfe825154344d9ba793e717d25dc8143ee53461a436f2f5484a26927da243f3d3f4e80406e852123aae03817902f9e78605c8a5906a4637cb57b5c</sha512>
+		<sha512>78ec5d732145eb1dd0919859cf971c91115d3e905ece46671415f0cefb776905ac0f6f0048aa3330a29f5b0b14d1d5cbd54cead6503957d9107867b33f1ca1c4</sha512>
 		<tags>
 			<tag>stable</tag>
 		</tags>
