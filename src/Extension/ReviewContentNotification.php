@@ -185,7 +185,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 'url'           => str_replace('/administrator', '', Uri::base()),
                 'last_modified' => Factory::getDate($articleValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                 'created'       => Factory::getDate($articleValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
-                'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $article->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
+                'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
 				'backend_url'   => $backendURL->toString(),
 				'date_modifier' => $dateModifier,
             ];
