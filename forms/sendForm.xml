@@ -4,15 +4,15 @@
 		<fieldset name="task_params">
 			<field
 				name="date_modifier"
-				type="list"
-				required="true"
+				type="number"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_LABEL"
+				min="1"
+				max="365"
 				default="2"
-				validate="options"
-			>
-				<option value="1">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_ONE_YEAR</option>
-				<option value="2">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TWO_YEAR</option>
-			</field>
+				hint="2"
+				validate="number"
+				filter="integer"
+			/>
 			<field
 				name="date_modifier_type"
 				type="list"
