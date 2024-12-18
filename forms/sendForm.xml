@@ -14,6 +14,18 @@
 				<option value="2">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TWO_YEAR</option>
 			</field>
 			<field
+				name="date_modifier_type"
+				type="list"
+				required="true"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_LABEL"
+				default="years"
+				validate="options"
+			>
+				<option value="days">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_DAYS</option>
+				<option value="months">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_MONTHS</option>
+				<option value="years">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_YEARS</option>
+			</field>
+			<field
 				name="categories_to_check"
 				type="category"
 				required="true"

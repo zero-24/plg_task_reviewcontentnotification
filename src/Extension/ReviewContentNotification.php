@@ -91,12 +91,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     {
         // Load the parameters
 		$dateModifier      = $event->getArgument('params')->date_modifier ?? '2';
+		$dateModifierType  = $event->getArgument('params')->date_modifier_type ?? 'years';
 		$categoriesToCheck = $event->getArgument('params')->categories_to_check ?? [];
 		$specificEmail     = $event->getArgument('params')->email ?? '';
         $forcedLanguage    = $event->getArgument('params')->language_override ?? '';
 
 		// Get all articles to send notifications about
-		$articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck);
+		$articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $dateModifierType);
 
         // If there are no articles to send notifications to we don't have to notify anyone about anything. This is NOT a duplicate check.
         if (empty($articlesToNotify) || $articlesToNotify === false)
@@ -315,18 +316,19 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     /**
      * Method to return the content artices that we need to notify the created users for
      *
-	 * @param  int    $dateModifier       The date modifier setting from the task needs to be resolved to the actuall value
-	 * @param  array  $categoriesToCheck  The categories that should be checked
+	 * @param  int     $dateModifier       The date modifier setting from the task needs to be resolved to the actuall value
+	 * @param  array   $categoriesToCheck  The categories that should be checked
+	 * @param  string  $dateModifierType   The date modifier type like days, months, years
 	 *
      * @return array  An array of content articles that we need to notify the created users
      *
      * @since  1.0.0
      */
-    private function getContentThatShouldBeNotified(int $dateModifier = 2, array $categoriesToCheck = [])
+    private function getContentThatShouldBeNotified(int $dateModifier = 2, array $categoriesToCheck = [], $dateModifierType = 'years')
     {
         // Set the date to the base time for checking the item
 		$minimumDatetime = new Date('now');
-		$minimumDatetime->modify('-' . $dateModifier . ' year');
+		$minimumDatetime->modify('-' . $dateModifier . ' ' . $dateModifierType);
 
 		if (empty($categoriesToCheck))
         {
