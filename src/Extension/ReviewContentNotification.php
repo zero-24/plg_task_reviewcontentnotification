@@ -150,7 +150,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 			{
 				$specificEmails = explode(',', $specificEmail);
 
-				foreach ($specificEmail as $key => $value)
+				foreach ($specificEmails as $key => $value)
 				{
 					$recipients[] = ['email' => $value, 'language' => $currentSiteLanguage];
 				}
@@ -160,7 +160,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 			if (!empty($articleValue->created_by))
 			{
 				// Take the language from the user or the forcedlanguage based on the configuration
-				if (in_array($forcedLanguage, ['user', 'auto']))
+				if ($forcedLanguage === 'user')
 				{
 					$recipients[] = [
 						'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleValue->created_by)->email,
@@ -171,7 +171,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 				{
 					$recipients[] = [
 						'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleValue->created_by)->email,
-						'language' => $forcedLanguage
+						'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage
 					];
 				}
 			}
@@ -184,7 +184,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 				foreach ($superUsers as $superUser)
 				{
 					// Take the language from the user or the forcedlanguage based on the configuration
-					if (in_array($forcedLanguage, ['user', 'auto']))
+					if ($forcedLanguage === 'user')
 					{
 						$recipients[] = [
 							'email' => $superUser->email,
@@ -194,7 +194,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 					}
 					else
 					{
-						$recipients[] = ['email' => $superUser->email, 'language' => $forcedLanguage];
+						$recipients[] = ['email' => $superUser->email, 'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage];
 					}
 
 				}
@@ -208,28 +208,28 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 			// Build the content URL
 			$contentUrl = RouteHelper::getArticleRoute($articleValue->id, $articleValue->catid, $articleValue->language);
 
-			// Replace merge codes with their values
-            $substitutions = [
-                'title'         => $articleValue->title,
-                'public_url'    => Route::link('site', $contentUrl, true, 0, true),
-                'sitename'      => $this->getApplication()->get('sitename'),
-                'url'           => str_replace('/administrator', '', Uri::base()),
-                'last_modified' => Factory::getDate($articleValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
-                'created'       => Factory::getDate($articleValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
-                'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
-				'backend_url'   => $backendURL->toString(),
-				'date_modifier' => $dateModifier,
-            ];
-
             // Send the emails to the recipients
             foreach ($recipients as $recipient)
 			{
-				// Try loading the preferred (forced) language
-				$jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
+				// Loading the preferred (forced) language or the site language
+                $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
+
+                // Replace merge codes with their values
+                $substitutions = [
+                    'title'         => $articleValue->title,
+                    'public_url'    => Route::link('site', $contentUrl, true, 0, true),
+                    'sitename'      => $this->getApplication()->get('sitename'),
+                    'url'           => str_replace('/administrator', '', Uri::base()),
+                    'last_modified' => Factory::getDate($articleValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
+                    'created'       => Factory::getDate($articleValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
+                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
+                    'backend_url'   => $backendURL->toString(),
+                    'date_modifier' => $dateModifier,
+                ];
 
                 try
 				{
-                    $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $jLanguage->getTag());
+                    $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
                     $mailer->addRecipient($recipient['email']);
                     $mailer->addTemplateData($substitutions);
                     $mailer->send();

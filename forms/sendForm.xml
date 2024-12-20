@@ -66,6 +66,7 @@
 				client="administrator"
 			>
 				<option value="">PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_NONE</option>
+				<option value="user">PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_USER</option>
 			</field>
 		</fieldset>
 	</fields>
