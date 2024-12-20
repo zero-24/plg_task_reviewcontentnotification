@@ -660,7 +660,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $articleLogEntry->article_id = $articleId;
         $articleLogEntry->seccond_notification_send = $today->toSQL();
 
-        return $this->getDatabase()->updateObject('#__content_reviewcontentnotification', $articleLogEntry);
+        return $this->getDatabase()->updateObject('#__content_reviewcontentnotification', $articleLogEntry, 'article_id');
 	}
 
     /**
