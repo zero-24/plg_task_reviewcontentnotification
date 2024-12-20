@@ -296,7 +296,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             }
 
             // The article has been processed the seccond time we can mark it now with the logging database
-            $this->markSeccondEmailAsSendinLogTable($seccondNotificationValue->id);
+            $this->markSeccondEmailAsSendInLogTable($seccondNotificationValue->id);
         }
 
         $this->logTask('ReviewContentNotification end');
@@ -652,7 +652,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
      * @since  1.0.1
      */
-	private function markSeccondEmailAsSendinLogTable($articleId)
+	private function markSeccondEmailAsSendInLogTable($articleId)
 	{
 		$today = new Date('now');
 
