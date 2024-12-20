@@ -39,6 +39,18 @@
 				published="1"
 			/>
 			<field
+				name="limit_items_per_run"
+				type="number"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_LIMIT_ITEMS_PER_RUN_LABEL"
+				min="10"
+				step="10"
+				max="500"
+				default="20"
+				hint="0"
+				validate="number"
+				filter="integer"
+			/>
+			<field
 				name="email"
 				type="text"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_EMAIL_LBL"

@@ -19,6 +19,7 @@ use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Table\Table;
 use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\Component\Scheduler\Administrator\Event\ExecuteTaskEvent;
 use Joomla\Component\Scheduler\Administrator\Task\Status;
@@ -93,11 +94,12 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 		$dateModifier      = $event->getArgument('params')->date_modifier ?? '2';
 		$dateModifierType  = $event->getArgument('params')->date_modifier_type ?? 'years';
 		$categoriesToCheck = $event->getArgument('params')->categories_to_check ?? [];
+        $limitItemsPerRun  = $event->getArgument('params')->limit_items_per_run ?? 20;
 		$specificEmail     = $event->getArgument('params')->email ?? '';
         $forcedLanguage    = $event->getArgument('params')->language_override ?? '';
 
 		// Get all articles to send notifications about
-		$articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $dateModifierType);
+		$articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $dateModifierType, $limitItemsPerRun);
 
         // If there are no articles to send notifications to we don't have to notify anyone about anything. This is NOT a duplicate check.
         if (empty($articlesToNotify) || $articlesToNotify === false)
@@ -137,11 +139,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, 'en-GB', true, true);
         $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, null, true, false);
 
-        // Then try loading the preferred (forced) language
-        if (!empty($forcedLanguage))
-		{
-            $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $forcedLanguage, true, false);
-        }
+		$currentSiteLanguage = $this->getApplication()->get('language', 'en-GB');
 
         foreach ($articlesToNotify as $articleId => $articleValue)
 		{
@@ -150,13 +148,32 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
 			if (!empty($specificEmail))
 			{
-				$recipients[] = explode(',', $specificEmail);
+				$specificEmails = explode(',', $specificEmail);
+
+				foreach ($specificEmail as $key => $value)
+				{
+					$recipients[] = ['email' => $value, 'language' => $currentSiteLanguage];
+				}
 			}
 
 			// Add the author URL for article
 			if (!empty($articleValue->created_by))
 			{
-				$recipients[] = Factory::getUser($articleValue->created_by)->email;
+				// Take the language from the user or the forcedlanguage based on the configuration
+				if (in_array($forcedLanguage, ['user', 'auto']))
+				{
+					$recipients[] = [
+						'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleValue->created_by)->email,
+						'language' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleValue->created_by)->getParam('language', $currentSiteLanguage)
+					];
+				}
+				else
+				{
+					$recipients[] = [
+						'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleValue->created_by)->email,
+						'language' => $forcedLanguage
+					];
+				}
 			}
 
 			// Add the super users to when we have not got any recipients until now
@@ -166,7 +183,20 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
 				foreach ($superUsers as $superUser)
 				{
-					$recipients[] = $superUser->email;
+					// Take the language from the user or the forcedlanguage based on the configuration
+					if (in_array($forcedLanguage, ['user', 'auto']))
+					{
+						$recipients[] = [
+							'email' => $superUser->email,
+							'language' => Factory::getContainer()->get(
+								UserFactoryInterface::class)->loadUserById($superUser->id)->getParam('language', $currentSiteLanguage)
+							];
+					}
+					else
+					{
+						$recipients[] = ['email' => $superUser->email, 'language' => $forcedLanguage];
+					}
+
 				}
 			}
 
@@ -194,10 +224,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             // Send the emails to the recipients
             foreach ($recipients as $recipient)
 			{
+				// Try loading the preferred (forced) language
+				$jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
+
                 try
 				{
                     $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $jLanguage->getTag());
-                    $mailer->addRecipient($recipient);
+                    $mailer->addRecipient($recipient['email']);
                     $mailer->addTemplateData($substitutions);
                     $mailer->send();
                 }
@@ -319,12 +352,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 	 * @param  int     $dateModifier       The date modifier setting from the task needs to be resolved to the actuall value
 	 * @param  array   $categoriesToCheck  The categories that should be checked
 	 * @param  string  $dateModifierType   The date modifier type like days, months, years
+	 * @param  int     $limit              Limit the result list for this task run
 	 *
      * @return array  An array of content articles that we need to notify the created users
      *
      * @since  1.0.0
      */
-    private function getContentThatShouldBeNotified(int $dateModifier = 2, array $categoriesToCheck = [], $dateModifierType = 'years')
+    private function getContentThatShouldBeNotified(int $dateModifier = 2, array $categoriesToCheck = [], $dateModifierType = 'years', $limit = 20)
     {
         // Set the date to the base time for checking the item
 		$minimumDatetime = new Date('now');
@@ -345,6 +379,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 			->whereIn($db->quoteName('state'), ['1'])
 			// Get only artilces from a given category
 			->whereIn($db->quoteName('catid'), $categoriesToCheck)
+			->setLimit($limit)
 			->bind(':minimum_datetime', $minimumDatetime->toSQL());
 
         $db->setQuery($query);
