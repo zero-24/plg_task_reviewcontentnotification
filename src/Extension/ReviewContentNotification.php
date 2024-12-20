@@ -91,12 +91,15 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     private function checkReviewContentNotification(ExecuteTaskEvent $event): int
     {
         // Load the parameters
-		$dateModifier      = $event->getArgument('params')->date_modifier ?? '2';
-		$dateModifierType  = $event->getArgument('params')->date_modifier_type ?? 'years';
-		$categoriesToCheck = $event->getArgument('params')->categories_to_check ?? [];
-        $limitItemsPerRun  = $event->getArgument('params')->limit_items_per_run ?? 20;
-		$specificEmail     = $event->getArgument('params')->email ?? '';
-        $forcedLanguage    = $event->getArgument('params')->language_override ?? 'user';
+		$dateModifier            = $event->getArgument('params')->date_modifier ?? '2';
+		$dateModifierType        = $event->getArgument('params')->date_modifier_type ?? 'years';
+		$seccondNotification     = $event->getArgument('params')->seccond_notification ?? 0;
+		$seccondDateModifier     = $event->getArgument('params')->seccond_date_modifier ?? '2';
+		$seccondDateModifierType = $event->getArgument('params')->seccond_date_modifier_type ?? 'months';
+		$categoriesToCheck       = $event->getArgument('params')->categories_to_check ?? [];
+        $limitItemsPerRun        = $event->getArgument('params')->limit_items_per_run ?? 20;
+		$specificEmail           = $event->getArgument('params')->email ?? '';
+        $forcedLanguage          = $event->getArgument('params')->language_override ?? 'user';
 
 		// Get all articles to send notifications about
 		$articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $dateModifierType, $limitItemsPerRun);
@@ -104,6 +107,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         // If there are no articles to send notifications to we don't have to notify anyone about anything. This is NOT a duplicate check.
         if (empty($articlesToNotify) || $articlesToNotify === false)
 		{
+			$this->logTask('ReviewContentNotification end');
+
             return Status::OK;
         }
 
@@ -144,65 +149,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         foreach ($articlesToNotify as $articleId => $articleValue)
 		{
 			// Let's find out the email addresses to notify
-			$recipients = [];
-
-			if (!empty($specificEmail))
-			{
-				$specificEmails = explode(',', $specificEmail);
-
-				foreach ($specificEmails as $key => $value)
-				{
-					$recipients[] = ['email' => $value, 'language' => $currentSiteLanguage];
-				}
-			}
-
-			// Add the author URL for article
-			if (!empty($articleValue->created_by))
-			{
-				// Take the language from the user or the forcedlanguage based on the configuration
-				if ($forcedLanguage === 'user')
-				{
-					$recipients[] = [
-						'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleValue->created_by)->email,
-						'language' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleValue->created_by)->getParam('language', $currentSiteLanguage)
-					];
-				}
-				else
-				{
-					$recipients[] = [
-						'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleValue->created_by)->email,
-						'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage
-					];
-				}
-			}
-
-			// Add the super users to when we have not got any recipients until now
-			if (empty($recipients))
-			{
-				$superUsers = $this->getSuperUsers();
-
-				foreach ($superUsers as $superUser)
-				{
-					// Take the language from the user or the forcedlanguage based on the configuration
-					if ($forcedLanguage === 'user')
-					{
-						$recipients[] = [
-							'email' => $superUser->email,
-							'language' => Factory::getContainer()->get(
-								UserFactoryInterface::class)->loadUserById($superUser->id)->getParam('language', $currentSiteLanguage)
-							];
-					}
-					else
-					{
-						$recipients[] = ['email' => $superUser->email, 'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage];
-					}
-
-				}
-			}
+			$recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $articleValue, $forcedLanguage);
 
 			if (empty($recipients))
 			{
-				return Status::KNOCKOUT;
+				$this->logTask('Empty recipients for article id: ' . $articleValue->id);
+
+				continue;
 			}
 
 			// Build the content URL
@@ -246,6 +199,107 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     }
                 }
             }
+
+            $this->addArticleToTheLogTable($articleValue->id);
+
+			// SECOND NOTIFICATIONS
+
+			// Check whether we should send seccond eMails
+			if (!$seccondNotification)
+			{
+				$this->logTask('ReviewContentNotification end');
+
+				return Status::OK;
+			}
+
+			// Check whether we do have seccond emails to send
+			$seccondNotificataionArticles = $this->getArticlesToSendSeccondNotificationFor($categoriesToCheck, $limit);
+
+			if (empty($seccondNotificataionArticles))
+			{
+				$this->logTask('ReviewContentNotification end');
+
+				return Status::OK;
+			}
+
+			// Collect information and send the seccond eMails
+			foreach ($seccondNotificataionArticles as $key => $seccondNotificationValue)
+			{
+				$lastNotificationDate = new Date($this->getLastNotificationDateByArticleId($seccondNotificationValue->id));
+				$articleLastModifed = new Date($seccondNotificationValue->modified);
+
+				if ($articleLastModifed > $lastNotificationDate)
+				{
+					// The article has been modified between the last notification and today, remove it from the log table and continue
+					$this->removeArticleIdFromLogTabele($seccondNotificationValue->id);
+
+					continue;
+				}
+
+				// Check whether the seccond email has been send already
+				if ($this->hasTheSeccondMailBeenSendAlready($seccondNotificationValue->id))
+				{
+					continue;
+				}
+
+				// Let's find out the email addresses to notify
+				$recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $seccondNotificationValue, $forcedLanguage);
+
+				if (empty($recipients))
+				{
+					$this->logTask('Empty recipients for article id: ' . $articleValue->id);
+
+					continue;
+				}
+
+				// Build the content URL
+				$contentUrl = RouteHelper::getArticleRoute($seccondNotificationValue->id, $seccondNotificationValue->catid, $seccondNotificationValue->language);
+
+				// Send the emails to the recipients
+				foreach ($recipients as $recipient)
+				{
+					// Loading the preferred (forced) language or the site language
+					$jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
+
+					// Replace merge codes with their values
+					$substitutions = [
+						'title'         => $seccondNotificationValue->title,
+						'public_url'    => Route::link('site', $contentUrl, true, 0, true),
+						'sitename'      => $this->getApplication()->get('sitename'),
+						'url'           => str_replace('/administrator', '', Uri::base()),
+						'last_modified' => Factory::getDate($seccondNotificationValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
+						'created'       => Factory::getDate($seccondNotificationValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
+						'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $seccondNotificationValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
+						'backend_url'   => $backendURL->toString(),
+						'date_modifier' => $dateModifier,
+					];
+
+					try
+					{
+						$mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
+						$mailer->addRecipient($recipient['email']);
+						$mailer->addTemplateData($substitutions);
+						$mailer->send();
+					}
+					catch (MailDisabledException | phpMailerException $exception)
+					{
+						try
+						{
+							$this->logTask($jLanguage->_($exception->getMessage()));
+							$this->logTask('ReviewContentNotification end');
+
+							return Status::OK;
+						}
+						catch (\RuntimeException $exception)
+						{
+							return Status::KNOCKOUT;
+						}
+					}
+				}
+
+				// The article has been processed the seccond time we can mark it now with the logging database
+				$this->markSeccondEmailAsSendinLogTable($seccondNotificationValue->id);
+			}
         }
 
         $this->logTask('ReviewContentNotification end');
@@ -369,8 +423,16 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             return false;
         }
 
+		// First get all items from the already send table
+		$db    = $this->getDatabase();
+		$query = $db->getQuery(true)
+			->select($db->quoteName(['article_id']))
+			->from($db->quoteName('#__content_reviewcontentnotification'));
+
+		$db->setQuery($query);
+		$alreadySendToArticleIds = $db->loadColumn();
+
 		// Check the Content Items that should be informed
-        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select($db->quoteName(['id', 'title', 'created', 'modified', 'catid', 'created_by', 'state', 'language']))
             ->from($db->quoteName('#__content'))
@@ -379,12 +441,247 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 			->whereIn($db->quoteName('state'), ['1'])
 			// Get only artilces from a given category
 			->whereIn($db->quoteName('catid'), $categoriesToCheck)
+			->whereNotIn($db->quoteName('id'), $alreadySendToArticleIds)
 			->setLimit($limit)
-			->bind(':minimum_datetime', $minimumDatetime->toSQL());
+			->bind(':minimum_datetime', $minimumDatetime->toSQL(), ParameterType::STRING);
 
         $db->setQuery($query);
 
         // Retrun the result
         return $db->loadObjectList();
     }
+
+    /**
+     * Add the current article to the log table with the current and the date for the seccond notification
+     *
+	 * @param  int     $articleId                 The ID of the article to add to the table
+     * @param  int     $seccondDateModifier       The date modifier setting for the seccond email from the task needs to be resolved to the actual value
+	 * @param  string  $seccondDateModifierType   The date modifier type for the seccond email like days, months, years
+	 *
+     * @return array  An array of content articles that we need to notify the created users
+     *
+     * @since  1.0.1
+     */
+    private function addArticleToTheLogTable($articleId, $seccondDateModifier, $seccondDateModifierType)
+    {
+        $today = new Date('now');
+        $seccondNotification = new Date('now');
+        $seccondNotification->modify('+' . $seccondDateModifier . ' ' . $seccondDateModifierType);
+
+        $articleLogEntry = new stdClass();
+        $articleLogEntry->article_id = $articleId;
+        $articleLogEntry->last_notification = $today->toSQL();
+        $articleLogEntry->seccond_notification = $seccondNotification->toSQL();
+
+        return $db->insertObject('#__content_reviewcontentnotification', $articleLogEntry);
+    }
+
+    /**
+     * Method to return the content artices that we need to notify the seccond time
+     *
+	 * @param  array   $categoriesToCheck  The categories that should be checked
+	 * @param  int     $limit              Limit the result list for this task run
+	 *
+     * @return array  An array of content articles that we need to notify the created users
+     *
+     * @since  1.0.1
+     */
+	private function getArticlesToSendSeccondNotificationFor(array $categoriesToCheck = [], $limit)
+	{
+		$today = new Date('now');
+
+		// First get all items from the already send table
+		$db    = $this->getDatabase();
+		$query = $db->getQuery(true)
+			->select($db->quoteName(['article_id']))
+			->from($db->quoteName('#__content_reviewcontentnotification'))
+			->where($db->quoteName('seccond_notification') . ' < :today')
+			->setLimit($limit)
+			->bind(':today', $today->toSQL(), ParameterType::STRING);
+
+		$db->setQuery($query);
+		$alreadySendToArticleIds = $db->loadColumn();
+
+		// Check the Content Items that should be informed
+		$query = $db->getQuery(true)
+			->select($db->quoteName(['id', 'title', 'created', 'modified', 'catid', 'created_by', 'state', 'language']))
+			->from($db->quoteName('#__content'))
+			// Get only published articles
+			->whereIn($db->quoteName('state'), ['1'])
+			// Get only artilces from a given category
+			->whereIn($db->quoteName('catid'), $categoriesToCheck)
+			->whereIn($db->quoteName('id'), ':already_send_articles')
+			->setLimit($limit)
+			->bind(':already_send_articles', $alreadySendToArticleIds, ParameterType::INTEGER);
+
+		$db->setQuery($query);
+
+		// Retrun the result
+		return $db->loadObjectList();
+	}
+
+    /**
+     * Method to return the last notification date for a given article ID
+     *
+	 * @param  int   $articleId  The article ID we want to check
+	 *
+     * @return string  The last notification date for the given article ID
+     *
+     * @since  1.0.1
+     */
+	private function getLastNotificationDateByArticleId($articleId)
+	{
+		$db    = $this->getDatabase();
+		$query = $db->getQuery(true)
+			->select($db->quoteName(['last_notification']))
+			->from($db->quoteName('#__content_reviewcontentnotification'))
+			->where($db->quoteName('id') . ' = :id')
+			->bind(':id', $articleId, ParameterType::INTEGER);
+
+		$db->setQuery($query);
+
+		return $db->loadResult();
+	}
+
+    /**
+     * Method to return the last notification date for a given article ID
+     *
+	 * @param  string     $specificEmail        The configuration setting with the specific emails
+	 * @param  string     $currentSiteLanguage  The current defaut site language
+	 * @param  stdClass   $articleObject        The current article object from the database
+	 * @param  string     $forcedLanguage       The language to force on the eMail
+	 *
+     * @return string  The last notification date for the given article ID
+     *
+     * @since  1.0.1
+     */
+	private function getRecipientsArray($specificEmail, $currentSiteLanguage, $articleObject, $forcedLanguage): array
+	{
+		$recipients = [];
+
+		if (!empty($specificEmail))
+		{
+			$specificEmails = explode(',', $specificEmail);
+
+			foreach ($specificEmails as $key => $value)
+			{
+				$recipients[] = ['email' => $value, 'language' => $currentSiteLanguage];
+			}
+		}
+
+		// Add the author URL for article
+		if (!empty($articleObject->created_by))
+		{
+			// Take the language from the user or the forcedlanguage based on the configuration
+			if ($forcedLanguage === 'user')
+			{
+				$recipients[] = [
+					'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->email,
+					'language' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->getParam('language', $currentSiteLanguage)
+				];
+			}
+			else
+			{
+				$recipients[] = [
+					'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->email,
+					'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage
+				];
+			}
+		}
+
+		// Add the super users to when we have not got any recipients until now
+		if (empty($recipients))
+		{
+			$superUsers = $this->getSuperUsers();
+
+			foreach ($superUsers as $superUser)
+			{
+				// Take the language from the user or the forcedlanguage based on the configuration
+				if ($forcedLanguage === 'user')
+				{
+					$recipients[] = [
+						'email' => $superUser->email,
+						'language' => Factory::getContainer()->get(
+							UserFactoryInterface::class)->loadUserById($superUser->id)->getParam('language', $currentSiteLanguage)
+						];
+				}
+				else
+				{
+					$recipients[] = ['email' => $superUser->email, 'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage];
+				}
+			}
+		}
+	}
+
+    /**
+     * Method to delete the given artilce ID from the logging table
+     *
+	 * @param  int   $articleId  The article ID we want to check
+	 *
+     * @return  void
+     *
+     * @since  1.0.1
+     */
+	private function removeArticleIdFromLogTabele($articleId)
+	{
+		$db    = $this->getDatabase();
+		$query = $db->getQuery(true)
+			->delete($db->quoteName('#__content_reviewcontentnotification'))
+			->where($db->quoteName('id') . ' = :id')
+			->bind(':id', $articleId, ParameterType::INTEGER);
+
+		$db->setQuery($query);
+
+		return $db->execute();
+	}
+
+    /**
+     * Mark the seccond notification as send within the log table
+     *
+	 * @param  int   $articleId  The article ID we want to check
+	 *
+     * @return  bool
+     *
+     * @since  1.0.1
+     */
+	private function markSeccondEmailAsSendinLogTable($articleId)
+	{
+		$today = new Date('now');
+
+        $articleLogEntry = new stdClass();
+        $articleLogEntry->article_id = $articleId;
+        $articleLogEntry->seccond_notification_send = $today->toSQL();
+
+        return $db->updateObject('#__content_reviewcontentnotification', $articleLogEntry);
+	}
+
+    /**
+     * Method to check whether the seccond mail for the article has already been send
+     *
+	 * @param  int   $articleId  The article ID we want to check
+	 *
+     * @return  bool
+     *
+     * @since  1.0.1
+     */
+	private function hasTheSeccondMailBeenSendAlready($articleId): bool
+	{
+		$db    = $this->getDatabase();
+		$query = $db->getQuery(true)
+			->select($db->quoteName(['seccond_notification_send']))
+			->from($db->quoteName('#__content_reviewcontentnotification'))
+			->where($db->quoteName('id') . ' = :id')
+			->bind(':id', $articleId, ParameterType::INTEGER);
+
+		$db->setQuery($query);
+
+		$result = $db->loadResult();
+
+		if (empty($result) || $result === null)
+		{
+			return false;
+		}
+
+		return true;
+	}
 }
