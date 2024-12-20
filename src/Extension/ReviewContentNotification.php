@@ -441,9 +441,14 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 			->whereIn($db->quoteName('state'), ['1'])
 			// Get only artilces from a given category
 			->whereIn($db->quoteName('catid'), $categoriesToCheck)
-			->whereNotIn($db->quoteName('id'), $alreadySendToArticleIds)
 			->setLimit($limit)
 			->bind(':minimum_datetime', $minimumDatetime->toSQL(), ParameterType::STRING);
+
+        // Filter the select if we have any items already send
+        if (!empty($alreadySendToArticleIds))
+        {
+            $query->whereNotIn($db->quoteName('id'), $alreadySendToArticleIds);
+        }
 
         $db->setQuery($query);
 
@@ -510,9 +515,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 			->whereIn($db->quoteName('state'), ['1'])
 			// Get only artilces from a given category
 			->whereIn($db->quoteName('catid'), $categoriesToCheck)
-			->whereIn($db->quoteName('id'), ':already_send_articles')
-			->setLimit($limit)
-			->bind(':already_send_articles', $alreadySendToArticleIds, ParameterType::INTEGER);
+			->setLimit($limit);
+
+        // Filter the select if we have any items already send
+        if (!empty($alreadySendToArticleIds))
+        {
+            $query->whereIn($db->quoteName('id'), $alreadySendToArticleIds);
+        }
 
 		$db->setQuery($query);
 
