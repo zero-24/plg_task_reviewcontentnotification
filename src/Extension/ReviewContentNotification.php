@@ -287,9 +287,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     try
                     {
                         $this->logTask($jLanguage->_($exception->getMessage()));
-                        $this->logTask('ReviewContentNotification end');
-
-                        return Status::OK;
                     }
                     catch (\RuntimeException $exception)
                     {
