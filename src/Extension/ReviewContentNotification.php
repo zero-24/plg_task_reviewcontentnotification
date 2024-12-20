@@ -544,7 +544,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 		$query = $db->getQuery(true)
 			->select($db->quoteName(['last_notification']))
 			->from($db->quoteName('#__content_reviewcontentnotification'))
-			->where($db->quoteName('id') . ' = :id')
+			->where($db->quoteName('article_id') . ' = :id')
 			->bind(':id', $articleId, ParameterType::INTEGER);
 
 		$db->setQuery($query);
@@ -555,10 +555,10 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     /**
      * Method to return the last notification date for a given article ID
      *
-	 * @param  string     $specificEmail        The configuration setting with the specific emails
-	 * @param  string     $currentSiteLanguage  The current defaut site language
+	 * @param  string      $specificEmail        The configuration setting with the specific emails
+	 * @param  string      $currentSiteLanguage  The current defaut site language
 	 * @param  \stdClass   $articleObject        The current article object from the database
-	 * @param  string     $forcedLanguage       The language to force on the eMail
+	 * @param  string      $forcedLanguage       The language to force on the eMail
 	 *
      * @return string  The last notification date for the given article ID
      *
@@ -638,7 +638,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 		$db    = $this->getDatabase();
 		$query = $db->getQuery(true)
 			->delete($db->quoteName('#__content_reviewcontentnotification'))
-			->where($db->quoteName('id') . ' = :id')
+			->where($db->quoteName('article_id') . ' = :id')
 			->bind(':id', $articleId, ParameterType::INTEGER);
 
 		$db->setQuery($query);
@@ -681,7 +681,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 		$query = $db->getQuery(true)
 			->select($db->quoteName(['seccond_notification_send']))
 			->from($db->quoteName('#__content_reviewcontentnotification'))
-			->where($db->quoteName('id') . ' = :id')
+			->where($db->quoteName('article_id') . ' = :id')
 			->bind(':id', $articleId, ParameterType::INTEGER);
 
 		$db->setQuery($query);
