@@ -620,6 +620,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 				}
 			}
 		}
+
+        return $recipients;
 	}
 
     /**
