@@ -10,6 +10,7 @@
 				max="365"
 				default="2"
 				hint="2"
+				required="true"
 				validate="number"
 				filter="integer"
 			/>
@@ -43,6 +44,7 @@
 				max="365"
 				default="2"
 				hint="2"
+				required="true"
 				validate="number"
 				filter="integer"
 				showon="seccond_notification:1"

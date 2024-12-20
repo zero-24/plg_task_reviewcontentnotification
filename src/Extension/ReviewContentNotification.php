@@ -103,9 +103,12 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
 		// Get all articles to send notifications about
 		$articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $dateModifierType, $limitItemsPerRun);
+        // Check whether we do have seccond emails to send
+        $seccondNotificataionArticles = $this->getArticlesToSendSeccondNotificationFor($categoriesToCheck, $limit);
 
         // If there are no articles to send notifications to we don't have to notify anyone about anything. This is NOT a duplicate check.
-        if (empty($articlesToNotify) || $articlesToNotify === false)
+        if ((empty($articlesToNotify) || $articlesToNotify === false) &&
+            (empty($seccondNotificataionArticles) || $seccondNotificataionArticles === false))
 		{
 			$this->logTask('ReviewContentNotification end');
 
@@ -200,106 +203,103 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 }
             }
 
-            $this->addArticleToTheLogTable($articleValue->id);
+            $this->addArticleToTheLogTable($articleValue->id, $seccondDateModifier, $seccondDateModifierType);
+        }
 
-			// SECOND NOTIFICATIONS
+        // SECOND NOTIFICATIONS
 
-			// Check whether we should send seccond eMails
-			if (!$seccondNotification)
-			{
-				$this->logTask('ReviewContentNotification end');
+        // Check whether we should send seccond eMails
+        if (!$seccondNotification)
+        {
+            $this->logTask('ReviewContentNotification end');
 
-				return Status::OK;
-			}
+            return Status::OK;
+        }
 
-			// Check whether we do have seccond emails to send
-			$seccondNotificataionArticles = $this->getArticlesToSendSeccondNotificationFor($categoriesToCheck, $limit);
+        if (empty($seccondNotificataionArticles))
+        {
+            $this->logTask('ReviewContentNotification end');
 
-			if (empty($seccondNotificataionArticles))
-			{
-				$this->logTask('ReviewContentNotification end');
+            return Status::OK;
+        }
 
-				return Status::OK;
-			}
+        // Collect information and send the seccond eMails
+        foreach ($seccondNotificataionArticles as $key => $seccondNotificationValue)
+        {
+            $lastNotificationDate = new Date($this->getLastNotificationDateByArticleId($seccondNotificationValue->id));
+            $articleLastModifed = new Date($seccondNotificationValue->modified);
 
-			// Collect information and send the seccond eMails
-			foreach ($seccondNotificataionArticles as $key => $seccondNotificationValue)
-			{
-				$lastNotificationDate = new Date($this->getLastNotificationDateByArticleId($seccondNotificationValue->id));
-				$articleLastModifed = new Date($seccondNotificationValue->modified);
+            if ($articleLastModifed > $lastNotificationDate)
+            {
+                // The article has been modified between the last notification and today, remove it from the log table and continue
+                $this->removeArticleIdFromLogTabele($seccondNotificationValue->id);
 
-				if ($articleLastModifed > $lastNotificationDate)
-				{
-					// The article has been modified between the last notification and today, remove it from the log table and continue
-					$this->removeArticleIdFromLogTabele($seccondNotificationValue->id);
+                continue;
+            }
 
-					continue;
-				}
+            // Check whether the seccond email has been send already
+            if ($this->hasTheSeccondMailBeenSendAlready($seccondNotificationValue->id))
+            {
+                continue;
+            }
 
-				// Check whether the seccond email has been send already
-				if ($this->hasTheSeccondMailBeenSendAlready($seccondNotificationValue->id))
-				{
-					continue;
-				}
+            // Let's find out the email addresses to notify
+            $recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $seccondNotificationValue, $forcedLanguage);
 
-				// Let's find out the email addresses to notify
-				$recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $seccondNotificationValue, $forcedLanguage);
+            if (empty($recipients))
+            {
+                $this->logTask('Empty recipients for article id: ' . $articleValue->id);
 
-				if (empty($recipients))
-				{
-					$this->logTask('Empty recipients for article id: ' . $articleValue->id);
+                continue;
+            }
 
-					continue;
-				}
+            // Build the content URL
+            $contentUrl = RouteHelper::getArticleRoute($seccondNotificationValue->id, $seccondNotificationValue->catid, $seccondNotificationValue->language);
 
-				// Build the content URL
-				$contentUrl = RouteHelper::getArticleRoute($seccondNotificationValue->id, $seccondNotificationValue->catid, $seccondNotificationValue->language);
+            // Send the emails to the recipients
+            foreach ($recipients as $recipient)
+            {
+                // Loading the preferred (forced) language or the site language
+                $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
 
-				// Send the emails to the recipients
-				foreach ($recipients as $recipient)
-				{
-					// Loading the preferred (forced) language or the site language
-					$jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
+                // Replace merge codes with their values
+                $substitutions = [
+                    'title'         => $seccondNotificationValue->title,
+                    'public_url'    => Route::link('site', $contentUrl, true, 0, true),
+                    'sitename'      => $this->getApplication()->get('sitename'),
+                    'url'           => str_replace('/administrator', '', Uri::base()),
+                    'last_modified' => Factory::getDate($seccondNotificationValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
+                    'created'       => Factory::getDate($seccondNotificationValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
+                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $seccondNotificationValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
+                    'backend_url'   => $backendURL->toString(),
+                    'date_modifier' => $dateModifier,
+                ];
 
-					// Replace merge codes with their values
-					$substitutions = [
-						'title'         => $seccondNotificationValue->title,
-						'public_url'    => Route::link('site', $contentUrl, true, 0, true),
-						'sitename'      => $this->getApplication()->get('sitename'),
-						'url'           => str_replace('/administrator', '', Uri::base()),
-						'last_modified' => Factory::getDate($seccondNotificationValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
-						'created'       => Factory::getDate($seccondNotificationValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
-						'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $seccondNotificationValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
-						'backend_url'   => $backendURL->toString(),
-						'date_modifier' => $dateModifier,
-					];
+                try
+                {
+                    $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
+                    $mailer->addRecipient($recipient['email']);
+                    $mailer->addTemplateData($substitutions);
+                    $mailer->send();
+                }
+                catch (MailDisabledException | phpMailerException $exception)
+                {
+                    try
+                    {
+                        $this->logTask($jLanguage->_($exception->getMessage()));
+                        $this->logTask('ReviewContentNotification end');
 
-					try
-					{
-						$mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
-						$mailer->addRecipient($recipient['email']);
-						$mailer->addTemplateData($substitutions);
-						$mailer->send();
-					}
-					catch (MailDisabledException | phpMailerException $exception)
-					{
-						try
-						{
-							$this->logTask($jLanguage->_($exception->getMessage()));
-							$this->logTask('ReviewContentNotification end');
+                        return Status::OK;
+                    }
+                    catch (\RuntimeException $exception)
+                    {
+                        return Status::KNOCKOUT;
+                    }
+                }
+            }
 
-							return Status::OK;
-						}
-						catch (\RuntimeException $exception)
-						{
-							return Status::KNOCKOUT;
-						}
-					}
-				}
-
-				// The article has been processed the seccond time we can mark it now with the logging database
-				$this->markSeccondEmailAsSendinLogTable($seccondNotificationValue->id);
-			}
+            // The article has been processed the seccond time we can mark it now with the logging database
+            $this->markSeccondEmailAsSendinLogTable($seccondNotificationValue->id);
         }
 
         $this->logTask('ReviewContentNotification end');
@@ -473,12 +473,12 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $seccondNotification = new Date('now');
         $seccondNotification->modify('+' . $seccondDateModifier . ' ' . $seccondDateModifierType);
 
-        $articleLogEntry = new stdClass();
+        $articleLogEntry = new \stdClass();
         $articleLogEntry->article_id = $articleId;
         $articleLogEntry->last_notification = $today->toSQL();
         $articleLogEntry->seccond_notification = $seccondNotification->toSQL();
 
-        return $db->insertObject('#__content_reviewcontentnotification', $articleLogEntry);
+        return $this->getDatabase()->insertObject('#__content_reviewcontentnotification', $articleLogEntry);
     }
 
     /**
@@ -557,7 +557,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
 	 * @param  string     $specificEmail        The configuration setting with the specific emails
 	 * @param  string     $currentSiteLanguage  The current defaut site language
-	 * @param  stdClass   $articleObject        The current article object from the database
+	 * @param  \stdClass   $articleObject        The current article object from the database
 	 * @param  string     $forcedLanguage       The language to force on the eMail
 	 *
      * @return string  The last notification date for the given article ID
@@ -659,11 +659,11 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 	{
 		$today = new Date('now');
 
-        $articleLogEntry = new stdClass();
+        $articleLogEntry = new \stdClass();
         $articleLogEntry->article_id = $articleId;
         $articleLogEntry->seccond_notification_send = $today->toSQL();
 
-        return $db->updateObject('#__content_reviewcontentnotification', $articleLogEntry);
+        return $this->getDatabase()->updateObject('#__content_reviewcontentnotification', $articleLogEntry);
 	}
 
     /**
