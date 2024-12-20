@@ -7,7 +7,7 @@ INSERT INTO "#__mail_templates" ("template_id", "extension", "language", "subjec
 -- Table structure for table `#__content_reviewcontentnotification`
 --
 CREATE TABLE IF NOT EXISTS "#__content_reviewcontentnotification" (
-  "article_id" serial NOT NULL,
+  "article_id" bigint NOT NULL,
   "last_notification" timestamp without time zone NOT NULL,
   "seccond_notification" timestamp without time zone NOT NULL,
   "seccond_notification_send" timestamp without time zone,

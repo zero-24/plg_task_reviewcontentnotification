@@ -7,9 +7,9 @@ INSERT INTO `#__mail_templates` (`template_id`, `extension`, `language`, `subjec
 -- Table structure for table `#__content_reviewcontentnotification`
 --
 CREATE TABLE IF NOT EXISTS `#__content_reviewcontentnotification` (
-  `article_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `article_id` int unsigned NOT NULL,
   `last_notification` datetime NOT NULL,
   `seccond_notification` datetime NOT NULL,
   `seccond_notification_send` datetime NULL DEFAULT NULL,
-  PRIMARY KEY (`article_id`),
+  PRIMARY KEY (`article_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
