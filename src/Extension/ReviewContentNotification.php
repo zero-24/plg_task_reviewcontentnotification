@@ -93,9 +93,9 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         // Load the parameters
 		$dateModifier            = $event->getArgument('params')->date_modifier ?? '2';
 		$dateModifierType        = $event->getArgument('params')->date_modifier_type ?? 'years';
-		$seccondNotification     = $event->getArgument('params')->seccond_notification ?? 0;
-		$seccondDateModifier     = $event->getArgument('params')->seccond_date_modifier ?? '2';
-		$seccondDateModifierType = $event->getArgument('params')->seccond_date_modifier_type ?? 'months';
+		$seccondNotification     = $event->getArgument('params')->second_notification ?? 0;
+		$seccondDateModifier     = $event->getArgument('params')->second_date_modifier ?? '2';
+		$seccondDateModifierType = $event->getArgument('params')->second_date_modifier_type ?? 'months';
 		$categoriesToCheck       = $event->getArgument('params')->categories_to_check ?? [];
         $limitItemsPerRun        = $event->getArgument('params')->limit_items_per_run ?? 20;
 		$specificEmail           = $event->getArgument('params')->email ?? '';
@@ -103,7 +103,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
 		// Get all articles to send notifications about
 		$articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $dateModifierType, $limitItemsPerRun);
-        // Check whether we do have seccond emails to send
+        // Check whether we do have second emails to send
         $seccondNotificataionArticles = $this->getArticlesToSendSeccondNotificationFor($categoriesToCheck, $limit);
 
         // If there are no articles to send notifications to we don't have to notify anyone about anything. This is NOT a duplicate check.
@@ -208,7 +208,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         // SECOND NOTIFICATIONS
 
-        // Check whether we should send seccond eMails
+        // Check whether we should send second eMails
         if (!$seccondNotification)
         {
             $this->logTask('ReviewContentNotification end');
@@ -223,7 +223,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             return Status::OK;
         }
 
-        // Collect information and send the seccond eMails
+        // Collect information and send the second eMails
         foreach ($seccondNotificataionArticles as $key => $seccondNotificationValue)
         {
             $lastNotificationDate = new Date($this->getLastNotificationDateByArticleId($seccondNotificationValue->id));
@@ -237,7 +237,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 continue;
             }
 
-            // Check whether the seccond email has been send already
+            // Check whether the second email has been send already
             if ($this->hasTheSeccondMailBeenSendAlready($seccondNotificationValue->id))
             {
                 continue;
@@ -295,7 +295,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 }
             }
 
-            // The article has been processed the seccond time we can mark it now with the logging database
+            // The article has been processed the second time we can mark it now with the logging database
             $this->markSeccondEmailAsSendInLogTable($seccondNotificationValue->id);
         }
 
@@ -454,11 +454,11 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     }
 
     /**
-     * Add the current article to the log table with the current and the date for the seccond notification
+     * Add the current article to the log table with the current and the date for the second notification
      *
 	 * @param  int     $articleId                 The ID of the article to add to the table
-     * @param  int     $seccondDateModifier       The date modifier setting for the seccond email from the task needs to be resolved to the actual value
-	 * @param  string  $seccondDateModifierType   The date modifier type for the seccond email like days, months, years
+     * @param  int     $seccondDateModifier       The date modifier setting for the second email from the task needs to be resolved to the actual value
+	 * @param  string  $seccondDateModifierType   The date modifier type for the second email like days, months, years
 	 *
      * @return array  An array of content articles that we need to notify the created users
      *
@@ -473,13 +473,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $articleLogEntry = new \stdClass();
         $articleLogEntry->article_id = $articleId;
         $articleLogEntry->last_notification = $today->toSQL();
-        $articleLogEntry->seccond_notification = $seccondNotification->toSQL();
+        $articleLogEntry->second_notification = $seccondNotification->toSQL();
 
         return $this->getDatabase()->insertObject('#__content_reviewcontentnotification', $articleLogEntry);
     }
 
     /**
-     * Method to return the content artices that we need to notify the seccond time
+     * Method to return the content artices that we need to notify the second time
      *
 	 * @param  array   $categoriesToCheck  The categories that should be checked
 	 * @param  int     $limit              Limit the result list for this task run
@@ -497,7 +497,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 		$query = $db->getQuery(true)
 			->select($db->quoteName(['article_id']))
 			->from($db->quoteName('#__content_reviewcontentnotification'))
-			->where($db->quoteName('seccond_notification') . ' < :today')
+			->where($db->quoteName('second_notification') . ' < :today')
 			->setLimit($limit)
 			->bind(':today', $today->toSQL(), ParameterType::STRING);
 
@@ -644,7 +644,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 	}
 
     /**
-     * Mark the seccond notification as send within the log table
+     * Mark the second notification as send within the log table
      *
 	 * @param  int   $articleId  The article ID we want to check
 	 *
@@ -658,13 +658,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         $articleLogEntry = new \stdClass();
         $articleLogEntry->article_id = $articleId;
-        $articleLogEntry->seccond_notification_send = $today->toSQL();
+        $articleLogEntry->second_notification_send = $today->toSQL();
 
         return $this->getDatabase()->updateObject('#__content_reviewcontentnotification', $articleLogEntry, 'article_id');
 	}
 
     /**
-     * Method to check whether the seccond mail for the article has already been send
+     * Method to check whether the second mail for the article has already been send
      *
 	 * @param  int   $articleId  The article ID we want to check
 	 *
@@ -676,7 +676,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 	{
 		$db    = $this->getDatabase();
 		$query = $db->getQuery(true)
-			->select($db->quoteName(['seccond_notification_send']))
+			->select($db->quoteName(['second_notification_send']))
 			->from($db->quoteName('#__content_reviewcontentnotification'))
 			->where($db->quoteName('article_id') . ' = :id')
 			->bind(':id', $articleId, ParameterType::INTEGER);
