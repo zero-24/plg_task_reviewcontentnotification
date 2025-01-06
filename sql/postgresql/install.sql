@@ -13,4 +13,3 @@ CREATE TABLE IF NOT EXISTS "#__content_reviewcontentnotification" (
   "second_notification_send" timestamp without time zone,
   PRIMARY KEY ("article_id")
 );
-
