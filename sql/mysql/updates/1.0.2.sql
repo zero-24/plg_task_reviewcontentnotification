@@ -7,4 +7,4 @@ INSERT IGNORE INTO `#__mail_templates` (`template_id`, `extension`, `language`, 
 
 -- Rename the column
 ALTER TABLE `#__content_reviewcontentnotification` CHANGE COLUMN seccond_notification second_notification datetime;
-ALTER TABLE `#__content_reviewcontentnotification` CHANGE COLUMN seccond_notification second_notification datetime;
+ALTER TABLE `#__content_reviewcontentnotification` CHANGE COLUMN seccond_notification_send second_notification_send datetime;
