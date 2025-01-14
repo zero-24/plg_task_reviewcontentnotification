@@ -1,5 +1,5 @@
 -- Remove old version of the template
-DELETE FROM `#__mail_templates` WHERE `template_id` = 'plg_task_reviewcontentnotification.second_notification_mail';
+DELETE FROM `#__mail_templates` WHERE `template_id` = 'plg_task_reviewcontentnotification.seccond_notification_mail';
 
 -- Add the new mail templates
 INSERT IGNORE INTO `#__mail_templates` (`template_id`, `extension`, `language`, `subject`, `body`, `htmlbody`, `attachments`, `params`) VALUES
