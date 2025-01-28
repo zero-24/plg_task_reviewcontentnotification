@@ -1,18 +1,18 @@
 <?xml version="1.0" ?>
 <updates>
 	<update>
-		<name>ReviewContentNotification 1.0.2</name>
+		<name>ReviewContentNotification 1.0.3</name>
 		<description>ReviewContentNotification Plugin</description>
 		<element>reviewcontentnotification</element>
 		<type>plugin</type>
 		<folder>task</folder>
 		<client>site</client>
-		<version>1.0.2</version>
+		<version>1.0.3</version>
 		<infourl title="ReviewContentNotification Plugin">https://github.com/zero-24/plg_task_reviewcontentnotification</infourl>
 		<downloads>
-			<downloadurl type="full" format="zip">https://github.com/zero-24/plg_task_reviewcontentnotification/releases/download/1.0.2/plg_task_reviewcontentnotification.zip</downloadurl>
+			<downloadurl type="full" format="zip">https://github.com/zero-24/plg_task_reviewcontentnotification/releases/download/1.0.3/plg_task_reviewcontentnotification.zip</downloadurl>
 		</downloads>
-		<sha512>a3db044955b8dd34c7e47a11b80f0fcecd2caf5ec042bbcfeefb02a7644ced0c8cea4411d05a61b090edbb3512127d0cdfdc16e751f4417d58e564b749ccb1c6</sha512>
+		<sha512>ea6a2aee6a023fb4173351516059abc2f85f0ae077b4a5592a11391fa12cf4a620f3afcb98a923e26250429f22be087bbe52320cddb99455d3cacf2e2415b670</sha512>
 		<tags>
 			<tag>stable</tag>
 		</tags>
