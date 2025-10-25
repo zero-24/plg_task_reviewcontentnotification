@@ -1,24 +1,45 @@
 <?xml version="1.0" ?>
 <updates>
 	<update>
-		<name>ReviewContentNotification 1.0.3</name>
+		<name>ReviewContentNotification 1.0.4</name>
 		<description>ReviewContentNotification Plugin</description>
 		<element>reviewcontentnotification</element>
 		<type>plugin</type>
 		<folder>task</folder>
 		<client>site</client>
-		<version>1.0.3</version>
+		<version>1.0.4</version>
 		<infourl title="ReviewContentNotification Plugin">https://github.com/zero-24/plg_task_reviewcontentnotification</infourl>
 		<downloads>
-			<downloadurl type="full" format="zip">https://github.com/zero-24/plg_task_reviewcontentnotification/releases/download/1.0.3/plg_task_reviewcontentnotification.zip</downloadurl>
+			<downloadurl type="full" format="zip">https://github.com/zero-24/plg_task_reviewcontentnotification/releases/download/1.0.4/plg_task_reviewcontentnotification.zip</downloadurl>
 		</downloads>
-		<sha512>ea6a2aee6a023fb4173351516059abc2f85f0ae077b4a5592a11391fa12cf4a620f3afcb98a923e26250429f22be087bbe52320cddb99455d3cacf2e2415b670</sha512>
+		<sha512>6a927da5125f1f25e1e9f89e7a085378cf8e0f8d9296c639957f25c30d1c1895de814b426a9d2a00a7c09116451e11a71d98781a6b5372c6f8470f50f455a836</sha512>
 		<tags>
 			<tag>stable</tag>
 		</tags>
 		<maintainer>Tobias Zulauf</maintainer>
 		<maintainerurl>https://www.jah-tz.de</maintainerurl>
 		<php_minimum>8.1.0</php_minimum>
-		<targetplatform name="joomla" version="5.[23]"/>
+		<targetplatform name="joomla" version="5.[234]"/>
+	</update>
+	<update>
+		<name>ReviewContentNotification 1.0.4</name>
+		<description>ReviewContentNotification Plugin</description>
+		<element>reviewcontentnotification</element>
+		<type>plugin</type>
+		<folder>task</folder>
+		<client>site</client>
+		<version>1.0.4</version>
+		<infourl title="ReviewContentNotification Plugin">https://github.com/zero-24/plg_task_reviewcontentnotification</infourl>
+		<downloads>
+			<downloadurl type="full" format="zip">https://github.com/zero-24/plg_task_reviewcontentnotification/releases/download/1.0.4/plg_task_reviewcontentnotification.zip</downloadurl>
+		</downloads>
+		<sha512>6a927da5125f1f25e1e9f89e7a085378cf8e0f8d9296c639957f25c30d1c1895de814b426a9d2a00a7c09116451e11a71d98781a6b5372c6f8470f50f455a836</sha512>
+		<tags>
+			<tag>stable</tag>
+		</tags>
+		<maintainer>Tobias Zulauf</maintainer>
+		<maintainerurl>https://www.jah-tz.de</maintainerurl>
+		<php_minimum>8.1.0</php_minimum>
+		<targetplatform name="joomla" version="6.0"/>
 	</update>
 </updates>

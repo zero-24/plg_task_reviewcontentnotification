@@ -2,12 +2,12 @@
 <extension type="plugin" group="task" method="upgrade">
 	<name>plg_task_reviewcontentnotification</name>
 	<author>Tobias Zulauf</author>
-	<creationDate>2024-12-17</creationDate>
+	<creationDate>2025-10-25</creationDate>
 	<copyright>Copyright (C) 2024 Tobias Zulauf (jah-tz.de). All rights reserved.</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
 	<authorEmail>kontakt@jah-tz.de</authorEmail>
 	<authorUrl>www.jah-tz.de</authorUrl>
-	<version>1.0.3</version>
+	<version>1.0.4</version>
 	<description>PLG_TASK_REVIEWCONTENTNOTIFICATION_XML_DESCRIPTION</description>
 	<namespace path="src">Joomla\Plugin\Task\ReviewContentNotification</namespace>
 	<files>
