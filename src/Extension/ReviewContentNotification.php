@@ -432,14 +432,14 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         $db->setQuery($query);
         $alreadySendToArticleIds = $db->loadColumn();
-
+        $states = ['1'];
         // Check the Content Items that should be informed
         $query = $db->getQuery(true)
             ->select($db->quoteName(['id', 'title', 'created', 'modified', 'catid', 'created_by', 'state', 'language']))
             ->from($db->quoteName('#__content'))
             ->where($db->quoteName('modified') . ' < :minimum_datetime')
             // Get only published articles
-            ->whereIn($db->quoteName('state'), ['1'])
+            ->whereIn($db->quoteName('state'), $states)
             ->setLimit($limit)
             ->bind(':minimum_datetime', $minimumDatetime->toSQL(), ParameterType::STRING);
 
@@ -450,7 +450,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 $query->whereNotIn($db->quoteName('catid'), $categoriesToCheck);
             }
         }
-     
+
         // Filter the select if we have any items already send
         if (!empty($alreadySendToArticleIds)) {
             $query->whereNotIn($db->quoteName('id'), $alreadySendToArticleIds);
@@ -516,13 +516,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         $db->setQuery($query);
         $alreadySendToArticleIds = $db->loadColumn();
-
+        $states = ['1'];
         // Check the Content Items that should be informed
         $query = $db->getQuery(true)
             ->select($db->quoteName(['id', 'title', 'created', 'modified', 'catid', 'created_by', 'state', 'language']))
             ->from($db->quoteName('#__content'))
             // Get only published articles
-            ->whereIn($db->quoteName('state'), ['1'])
+            ->whereIn($db->quoteName('state'), $states)
             // Get only artilces from a given category
             ->setLimit($limit);
 
