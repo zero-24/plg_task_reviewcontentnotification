@@ -504,7 +504,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             return [];
         }
         $today = new Date('now');
-
+        $todaySql = $today->toSQL();
+        // Set the date to the base time for checking the item
         // First get all items from the already send table
         $db    = $this->getDatabase();
         $query = $db->getQuery(true)
@@ -512,7 +513,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             ->from($db->quoteName('#__content_reviewcontentnotification'))
             ->where($db->quoteName('second_notification') . ' < :today')
             ->setLimit($limit)
-            ->bind(':today', $today->toSQL(), ParameterType::STRING);
+            ->bind(':today', $todaySql, ParameterType::STRING);
 
         $db->setQuery($query);
         $alreadySendToArticleIds = $db->loadColumn();
