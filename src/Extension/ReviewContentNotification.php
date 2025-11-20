@@ -104,13 +104,17 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         // Get all articles to send notifications about
         $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $dateModifierType, $limitItemsPerRun);
 
+        if (is_array($articlesToNotify)) {
+            $limitItemsPerRun -= \count($articlesToNotify);
+        }
+
         // Check whether we do have second emails to send
-        $secondNotificataionArticles = $this->getArticlesToSendSecondNotificationFor($categoriesToCheck, $limit);
+        $secondNotificataionArticles = $this->getArticlesToSendSecondNotificationFor($categoriesToCheck, $limitItemsPerRun);
 
         // If there are no articles to send notifications to we don't have to notify anyone about anything. This is NOT a duplicate check.
         if ((empty($articlesToNotify) || $articlesToNotify === false) &&
-            (empty($secondNotificataionArticles) || $secondNotificataionArticles === false))
-        {
+            (empty($secondNotificataionArticles) || $secondNotificataionArticles === false)
+        ) {
             $this->logTask('ReviewContentNotification end');
 
             return Status::OK;
@@ -119,7 +123,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         // Build the Backend URL
         $baseURL  = Uri::base();
         $baseURL  = rtrim($baseURL, '/');
-        $baseURL .= (substr($baseURL, -13) !== 'administrator') ? '/administrator/' : '/';
+        $baseURL .= (!str_ends_with($baseURL, 'administrator')) ? '/administrator/' : '/';
         $baseURL .= 'index.php';
         $backendURL = new Uri($baseURL);
 
@@ -150,13 +154,11 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         $currentSiteLanguage = $this->getApplication()->get('language', 'en-GB');
 
-        foreach ($articlesToNotify as $articleId => $articleValue)
-        {
+        foreach ($articlesToNotify as $articleId => $articleValue) {
             // Let's find out the email addresses to notify
             $recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $articleValue, $forcedLanguage);
 
-            if (empty($recipients))
-            {
+            if (empty($recipients)) {
                 $this->logTask('Empty recipients for article id: ' . $articleValue->id);
 
                 continue;
@@ -166,8 +168,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $contentUrl = RouteHelper::getArticleRoute($articleValue->id, $articleValue->catid, $articleValue->language);
 
             // Send the emails to the recipients
-            foreach ($recipients as $recipient)
-            {
+            foreach ($recipients as $recipient) {
                 // Loading the preferred (forced) language or the site language
                 $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
 
@@ -184,21 +185,15 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'date_modifier' => $dateModifier,
                 ];
 
-                try
-                {
+                try {
                     $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
                     $mailer->addRecipient($recipient['email']);
                     $mailer->addTemplateData($substitutions);
                     $mailer->send();
-                }
-                catch (MailDisabledException | phpMailerException $exception)
-                {
-                    try
-                    {
+                } catch (MailDisabledException | phpMailerException $exception) {
+                    try {
                         $this->logTask($jLanguage->_($exception->getMessage()));
-                    }
-                    catch (\RuntimeException $exception)
-                    {
+                    } catch (\RuntimeException) {
                         return Status::KNOCKOUT;
                     }
                 }
@@ -210,28 +205,24 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         // SECOND NOTIFICATIONS
 
         // Check whether we should send second eMails
-        if (!$secondNotification)
-        {
+        if (!$secondNotification) {
             $this->logTask('ReviewContentNotification end');
 
             return Status::OK;
         }
 
-        if (empty($secondNotificataionArticles))
-        {
+        if (empty($secondNotificataionArticles)) {
             $this->logTask('ReviewContentNotification end');
 
             return Status::OK;
         }
 
         // Collect information and send the second eMails
-        foreach ($secondNotificataionArticles as $key => $secondNotificationValue)
-        {
+        foreach ($secondNotificataionArticles as $key => $secondNotificationValue) {
             $lastNotificationDate = new Date($this->getLastNotificationDateByArticleId($secondNotificationValue->id));
             $articleLastModifed = new Date($secondNotificationValue->modified);
 
-            if ($articleLastModifed > $lastNotificationDate)
-            {
+            if ($articleLastModifed > $lastNotificationDate) {
                 // The article has been modified between the last notification and today, remove it from the log table and continue
                 $this->removeArticleIdFromLogTabele($secondNotificationValue->id);
 
@@ -239,8 +230,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             }
 
             // Check whether the second email has been send already
-            if ($this->hasTheSecondMailBeenSendAlready($secondNotificationValue->id))
-            {
+            if ($this->hasTheSecondMailBeenSendAlready($secondNotificationValue->id)) {
                 continue;
             }
 
@@ -248,16 +238,14 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $secondNotificationDate = new Date($this->getSecondNotificationDateByArticleId($secondNotificationValue->id));
             $today = new Date('now');
 
-            if ($secondNotificationDate > $today)
-            {
+            if ($secondNotificationDate > $today) {
                 continue;
             }
 
             // Let's find out the email addresses to notify
             $recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $secondNotificationValue, $forcedLanguage);
 
-            if (empty($recipients))
-            {
+            if (empty($recipients)) {
                 $this->logTask('Empty recipients for article id: ' . $articleValue->id);
 
                 continue;
@@ -267,8 +255,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $contentUrl = RouteHelper::getArticleRoute($secondNotificationValue->id, $secondNotificationValue->catid, $secondNotificationValue->language);
 
             // Send the emails to the recipients
-            foreach ($recipients as $recipient)
-            {
+            foreach ($recipients as $recipient) {
                 // Loading the preferred (forced) language or the site language
                 $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
 
@@ -285,21 +272,15 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'date_modifier' => $dateModifier,
                 ];
 
-                try
-                {
+                try {
                     $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
                     $mailer->addRecipient($recipient['email']);
                     $mailer->addTemplateData($substitutions);
                     $mailer->send();
-                }
-                catch (MailDisabledException | phpMailerException $exception)
-                {
-                    try
-                    {
+                } catch (MailDisabledException | phpMailerException $exception) {
+                    try {
                         $this->logTask($jLanguage->_($exception->getMessage()));
-                    }
-                    catch (\RuntimeException $exception)
-                    {
+                    } catch (\RuntimeException) {
                         return Status::KNOCKOUT;
                     }
                 }
@@ -364,7 +345,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             if (empty($groups)) {
                 return $ret;
             }
-        } catch (\Exception $exc) {
+        } catch (\Exception) {
             return $ret;
         }
 
@@ -381,7 +362,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             if (empty($userIDs)) {
                 return $ret;
             }
-        } catch (\Exception $exc) {
+        } catch (\Exception) {
             return $ret;
         }
 
@@ -395,13 +376,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 ->where($db->quoteName('sendEmail') . ' = 1');
 
             if (!empty($emails)) {
-                $lowerCaseEmails = array_map('strtolower', $emails);
+                $lowerCaseEmails = array_map(strtolower(...), $emails);
                 $query->whereIn('LOWER(' . $db->quoteName('email') . ')', $lowerCaseEmails, ParameterType::STRING);
             }
 
             $db->setQuery($query);
             $ret = $db->loadObjectList();
-        } catch (\Exception $exc) {
+        } catch (\Exception) {
             return $ret;
         }
 
@@ -426,8 +407,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $minimumDatetime = new Date('now');
         $minimumDatetime->modify('-' . $dateModifier . ' ' . $dateModifierType);
 
-        if (empty($categoriesToCheck))
-        {
+        if (empty($categoriesToCheck)) {
             return false;
         }
 
@@ -453,8 +433,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             ->bind(':minimum_datetime', $minimumDatetime->toSQL(), ParameterType::STRING);
 
         // Filter the select if we have any items already send
-        if (!empty($alreadySendToArticleIds))
-        {
+        if (!empty($alreadySendToArticleIds)) {
             $query->whereNotIn($db->quoteName('id'), $alreadySendToArticleIds);
         }
 
@@ -499,8 +478,11 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
      * @since  1.0.1
      */
-    private function getArticlesToSendSecondNotificationFor(array $categoriesToCheck = [], $limit)
+    private function getArticlesToSendSecondNotificationFor(array $categoriesToCheck = [], int $limit = 20)
     {
+        if ($limit <= 0) {
+            return [];
+        }
         $today = new Date('now');
 
         // First get all items from the already send table
@@ -526,8 +508,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             ->setLimit($limit);
 
         // Filter the select if we have any items already send
-        if (!empty($alreadySendToArticleIds))
-        {
+        if (!empty($alreadySendToArticleIds)) {
             $query->whereIn($db->quoteName('id'), $alreadySendToArticleIds);
         }
 
@@ -591,7 +572,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      * @param  \stdClass   $articleObject        The current article object from the database
      * @param  string      $forcedLanguage       The language to force on the eMail
      *
-     * @return string  The last notification date for the given article ID
+     * @return array The last notification date for the given article ID
      *
      * @since  1.0.1
      */
@@ -599,29 +580,23 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     {
         $recipients = [];
 
-        if (!empty($specificEmail))
-        {
+        if (!empty($specificEmail)) {
             $specificEmails = explode(',', $specificEmail);
 
-            foreach ($specificEmails as $key => $value)
-            {
+            foreach ($specificEmails as $value) {
                 $recipients[] = ['email' => $value, 'language' => $currentSiteLanguage];
             }
         }
 
         // Add the author URL for article
-        if (!empty($articleObject->created_by))
-        {
+        if (!empty($articleObject->created_by)) {
             // Take the language from the user or the forcedlanguage based on the configuration
-            if ($forcedLanguage === 'user')
-            {
+            if ($forcedLanguage === 'user') {
                 $recipients[] = [
                     'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->email,
                     'language' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->getParam('language', $currentSiteLanguage)
                 ];
-            }
-            else
-            {
+            } else {
                 $recipients[] = [
                     'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->email,
                     'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage
@@ -630,23 +605,19 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         }
 
         // Add the super users to when we have not got any recipients until now
-        if (empty($recipients))
-        {
+        if (empty($recipients)) {
             $superUsers = $this->getSuperUsers();
 
-            foreach ($superUsers as $superUser)
-            {
+            foreach ($superUsers as $superUser) {
                 // Take the language from the user or the forcedlanguage based on the configuration
-                if ($forcedLanguage === 'user')
-                {
+                if ($forcedLanguage === 'user') {
                     $recipients[] = [
                         'email' => $superUser->email,
                         'language' => Factory::getContainer()->get(
-                            UserFactoryInterface::class)->loadUserById($superUser->id)->getParam('language', $currentSiteLanguage)
-                        ];
-                }
-                else
-                {
+                            UserFactoryInterface::class
+                        )->loadUserById($superUser->id)->getParam('language', $currentSiteLanguage)
+                    ];
+                } else {
                     $recipients[] = ['email' => $superUser->email, 'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage];
                 }
             }
@@ -719,8 +690,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         $result = $db->loadResult();
 
-        if (empty($result) || $result === null)
-        {
+        if (empty($result) || $result === null) {
             return false;
         }
 
