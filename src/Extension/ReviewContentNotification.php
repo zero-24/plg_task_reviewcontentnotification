@@ -339,7 +339,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     {
 
         if (!$aggregations) {
-            return;
+            return Status::OK;
         }
 
         foreach ($aggregations as $email => $recipientAggreations) {
