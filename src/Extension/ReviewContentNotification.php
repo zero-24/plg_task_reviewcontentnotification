@@ -452,7 +452,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 $query->whereNotIn($db->quoteName('catid'), $categoriesToCheck);
             }
         }
-        print $query->dump();exit;
+     
         // Filter the select if we have any items already send
         if (!empty($alreadySendToArticleIds)) {
             $query->whereNotIn($db->quoteName('id'), $alreadySendToArticleIds);
