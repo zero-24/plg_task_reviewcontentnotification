@@ -122,19 +122,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         }
 
 
-        /**
-         * Some third party security solutions require a secret query parameter to allow log in to the administrator
-         * backend of the site. The link generated above will be invalid and could probably block the user out of their
-         * site, confusing them (they can't understand the third party security solution is not part of Joomla! proper).
-         * So, we're calling the onBuildAdministratorLoginURL system plugin event to let these third party solutions
-         * add any necessary secret query parameters to the URL. The plugins are supposed to have a method with the
-         * signature:
-         *
-         * public function onBuildAdministratorLoginURL(Uri &$uri);
-         *
-         * The plugins should modify the $uri object directly and return null.
-         */
-        $this->getApplication()->triggerEvent('onBuildAdministratorLoginURL', [&$backendURL]);
+
 
         /*
          * Load the appropriate language. We try to load English (UK), the current user's language and the forced
@@ -165,6 +153,21 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             foreach ($recipients as $recipient) {
                 // Loading the preferred (forced) language or the site language
                 $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
+                $backendURL = Route::link('administrator', 'index.php?option=com_content&task=article.edit&id=' . $articleValue->id, false, 0, true);
+
+                /**
+                 * Some third party security solutions require a secret query parameter to allow log in to the administrator
+                 * backend of the site. The link generated above will be invalid and could probably block the user out of their
+                 * site, confusing them (they can't understand the third party security solution is not part of Joomla! proper).
+                 * So, we're calling the onBuildAdministratorLoginURL system plugin event to let these third party solutions
+                 * add any necessary secret query parameters to the URL. The plugins are supposed to have a method with the
+                 * signature:
+                 *
+                 * public function onBuildAdministratorLoginURL(Uri &$uri);
+                 *
+                 * The plugins should modify the $uri object directly and return null.
+                 */
+                $this->getApplication()->triggerEvent('onBuildAdministratorLoginURL', [&$backendURL]);
 
                 // Replace merge codes with their values
                 $substitutions = [
@@ -175,7 +178,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'last_modified' => Factory::getDate($articleValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'created'       => Factory::getDate($articleValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), false, 0, true),
-                    'backend_url'    => Route::link('administrator', 'index.php?option=com_content&task=article.edit&id=' . $articleValue->id, false, 0, true),
+                    'backend_url'    => $backendURL,
                     'date_modifier' => $dateModifier,
                 ];
 
@@ -194,7 +197,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             }
 
             $this->addArticleToTheLogTable($articleValue->id, $secondDateModifier, $secondDateModifierType);
-            
         }
 
         // SECOND NOTIFICATIONS
@@ -254,6 +256,22 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 // Loading the preferred (forced) language or the site language
                 $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
 
+                $backendURL = Route::link('administrator', 'index.php?option=com_content&task=article.edit&id=' . $articleValue->id, false, 0, true);
+
+                /**
+                 * Some third party security solutions require a secret query parameter to allow log in to the administrator
+                 * backend of the site. The link generated above will be invalid and could probably block the user out of their
+                 * site, confusing them (they can't understand the third party security solution is not part of Joomla! proper).
+                 * So, we're calling the onBuildAdministratorLoginURL system plugin event to let these third party solutions
+                 * add any necessary secret query parameters to the URL. The plugins are supposed to have a method with the
+                 * signature:
+                 *
+                 * public function onBuildAdministratorLoginURL(Uri &$uri);
+                 *
+                 * The plugins should modify the $uri object directly and return null.
+                 */
+                $this->getApplication()->triggerEvent('onBuildAdministratorLoginURL', [&$backendURL]);
+
                 // Replace merge codes with their values
                 $substitutions = [
                     'title'         => $secondNotificationValue->title,
@@ -263,7 +281,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'last_modified' => Factory::getDate($secondNotificationValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'created'       => Factory::getDate($secondNotificationValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $secondNotificationValue->id . '&return=' . base64_encode(Uri::base()), false, 0, true),
-                    'backend_url'   => Route::link('administrator', 'index.php?option=com_content&task=article.edit&id=' . $secondNotificationValue->id, false, 0, true),
+                    'backend_url'   => $backendURL,
                     'date_modifier' => $dateModifier,
                 ];
 
