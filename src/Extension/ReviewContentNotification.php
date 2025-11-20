@@ -97,20 +97,21 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $secondDateModifier     = $event->getArgument('params')->second_date_modifier ?? '2';
         $secondDateModifierType = $event->getArgument('params')->second_date_modifier_type ?? 'months';
         $categoriesToCheck      = $event->getArgument('params')->categories_to_check ?? [];
+        $categoriesInclude      = (bool)($event->getArgument('params')->categories_include ?? true);
         $limitItemsPerRun       = $event->getArgument('params')->limit_items_per_run ?? 20;
         $specificEmail          = $event->getArgument('params')->email ?? '';
         $whoEmail               = $event->getArgument('params')->who_email ?? 'created';
         $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
 
         // Get all articles to send notifications about
-        $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $dateModifierType, $limitItemsPerRun);
+        $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $categoriesInclude, $dateModifierType, $limitItemsPerRun);
 
         if (is_array($articlesToNotify)) {
             $limitItemsPerRun -= \count($articlesToNotify);
         }
 
         // Check whether we do have second emails to send
-        $secondNotificataionArticles = $this->getArticlesToSendSecondNotificationFor($categoriesToCheck, $limitItemsPerRun);
+        $secondNotificataionArticles = $this->getArticlesToSendSecondNotificationFor($categoriesToCheck, $categoriesInclude, $limitItemsPerRun);
 
         // If there are no articles to send notifications to we don't have to notify anyone about anything. This is NOT a duplicate check.
         if ((empty($articlesToNotify) || $articlesToNotify === false) &&
@@ -407,6 +408,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
      * @param  int     $dateModifier       The date modifier setting from the task needs to be resolved to the actuall value
      * @param  array   $categoriesToCheck  The categories that should be checked
+     * @param  bool   $categoriesInclude  Include or Exclude categories
      * @param  string  $dateModifierType   The date modifier type like days, months, years
      * @param  int     $limit              Limit the result list for this task run
      *
@@ -414,15 +416,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
      * @since  1.0.0
      */
-    private function getContentThatShouldBeNotified(int $dateModifier = 2, array $categoriesToCheck = [], $dateModifierType = 'years', $limit = 20)
+    private function getContentThatShouldBeNotified(int $dateModifier = 2, array $categoriesToCheck = [], bool $categoriesInclude = true, $dateModifierType = 'years', $limit = 20)
     {
         // Set the date to the base time for checking the item
         $minimumDatetime = new Date('now');
         $minimumDatetime->modify('-' . $dateModifier . ' ' . $dateModifierType);
 
-        if (empty($categoriesToCheck)) {
-            return false;
-        }
+
 
         // First get all items from the already send table
         $db    = $this->getDatabase();
@@ -445,6 +445,14 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             ->setLimit($limit)
             ->bind(':minimum_datetime', $minimumDatetime->toSQL(), ParameterType::STRING);
 
+        if (!empty($categoriesToCheck)) {
+            if ($categoriesInclude) {
+                $query->whereIn($db->quoteName('catid'), $categoriesToCheck);
+            } else {
+                $query->whereNotIn($db->quoteName('catid'), $categoriesToCheck);
+            }
+        }
+        print $query->dump();exit;
         // Filter the select if we have any items already send
         if (!empty($alreadySendToArticleIds)) {
             $query->whereNotIn($db->quoteName('id'), $alreadySendToArticleIds);
@@ -485,13 +493,14 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      * Method to return the content artices that we need to notify the second time
      *
      * @param  array   $categoriesToCheck  The categories that should be checked
+     * @param  bool   $categoriesInclude  Include or Exclude categories
      * @param  int     $limit              Limit the result list for this task run
      *
      * @return array  An array of content articles that we need to notify the created users
      *
      * @since  1.0.1
      */
-    private function getArticlesToSendSecondNotificationFor(array $categoriesToCheck = [], int $limit = 20)
+    private function getArticlesToSendSecondNotificationFor(array $categoriesToCheck = [], bool $categoriesInclude = true, int $limit = 20)
     {
         if ($limit <= 0) {
             return [];
@@ -517,8 +526,15 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             // Get only published articles
             ->whereIn($db->quoteName('state'), ['1'])
             // Get only artilces from a given category
-            ->whereIn($db->quoteName('catid'), $categoriesToCheck)
             ->setLimit($limit);
+
+        if (!empty($categoriesToCheck)) {
+            if ($categoriesInclude) {
+                $query->whereIn($db->quoteName('catid'), $categoriesToCheck);
+            } else {
+                $query->whereNotIn($db->quoteName('catid'), $categoriesToCheck);
+            }
+        }
 
         // Filter the select if we have any items already send
         if (!empty($alreadySendToArticleIds)) {

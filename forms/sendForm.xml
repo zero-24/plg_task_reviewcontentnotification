@@ -65,7 +65,7 @@
 			<field
 				name="categories_to_check"
 				type="category"
-				required="true"
+				required="false"
 				label="JCATEGORY"
 				extension="com_content"
 				multiple="true"
@@ -75,6 +75,18 @@
 				hint="JOPTION_SELECT_CATEGORY"
 				published="1"
 			/>
+			 <field 
+			    name="categories_include" 
+				type="radio" default="1" 
+				layout="joomla.form.field.radio.switcher" 
+				filter="integer" 
+				showon="categories_to_check!:"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_CATEGORIES_INCLUDE_LBL" 
+				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_CATEGORIES_INCLUDE_DESC"
+			>
+          <option value="0">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_EXCLUDE</option>
+          <option value="1">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_INCLUDE</option>
+        </field>
 			<field
 				name="limit_items_per_run"
 				type="number"
