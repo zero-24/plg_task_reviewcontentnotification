@@ -101,6 +101,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $limitItemsPerRun       = $event->getArgument('params')->limit_items_per_run ?? 20;
         $specificEmail          = $event->getArgument('params')->email ?? '';
         $whoEmail               = $event->getArgument('params')->who_email ?? 'created';
+        $aggretateEmail               = (bool)($event->getArgument('params')->aggregate_email ?? false);
         $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
 
         // Get all articles to send notifications about
@@ -122,7 +123,11 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             return Status::OK;
         }
 
-
+        $aggregations = [];
+        $aggretateEmail               = (bool)($event->getArgument('params')->aggregate_email ?? false);
+        if (\count($articlesToNotify) == 1) {
+            $aggretateEmail = false;
+        }
 
 
         /*
@@ -137,6 +142,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, null, true, false);
 
         $currentSiteLanguage = $this->getApplication()->get('language', 'en-GB');
+
 
         foreach ($articlesToNotify as $articleId => $articleValue) {
             // Let's find out the email addresses to notify
@@ -182,23 +188,35 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'backend_url'    => $backendURL,
                     'date_modifier' => $dateModifier,
                 ];
+                if ($aggretateEmail) {
+                    $aggregations[$recipient['email']] ??= [];
+                    $aggregations[$recipient['email']][] = ['recipient' => $recipient, 'substitutions' => $substitutions];
+                } else {
 
-                try {
-                    $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
-                    $mailer->addRecipient($recipient['email']);
-                    $mailer->addTemplateData($substitutions);
-                    $mailer->send();
-                } catch (MailDisabledException | phpMailerException $exception) {
                     try {
-                        $this->logTask($jLanguage->_($exception->getMessage()));
-                    } catch (\RuntimeException) {
-                        return Status::KNOCKOUT;
+                        $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
+                        $mailer->addRecipient($recipient['email']);
+                        $mailer->addTemplateData($substitutions);
+                        $mailer->send();
+                    } catch (MailDisabledException | phpMailerException $exception) {
+                        try {
+                            $this->logTask($jLanguage->_($exception->getMessage()));
+                        } catch (\RuntimeException) {
+                            return Status::KNOCKOUT;
+                        }
                     }
                 }
             }
 
             $this->addArticleToTheLogTable($articleValue->id, $secondDateModifier, $secondDateModifierType);
         }
+
+        $ret = $this->sendAggregations($aggregations, $dateModifier, 'plg_task_reviewcontentnotification.not_modified_mail', $jLanguage);
+        if ($ret !== Status::OK) {
+            return $ret;
+        }
+
+        $aggregations = [];
 
         // SECOND NOTIFICATIONS
 
@@ -213,6 +231,11 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $this->logTask('ReviewContentNotification end');
 
             return Status::OK;
+        }
+
+        $aggretateEmail               = (bool)($event->getArgument('params')->aggregate_email ?? false);
+        if (\count($secondNotificataionArticles) == 1) {
+            $aggretateEmail = false;
         }
 
         // Collect information and send the second eMails
@@ -245,7 +268,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
             if (empty($recipients)) {
                 $this->logTask('Empty recipients for article id: ' . $articleValue->id);
-
                 continue;
             }
 
@@ -285,17 +307,22 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'backend_url'   => $backendURL,
                     'date_modifier' => $dateModifier,
                 ];
+                if ($aggretateEmail) {
+                    $aggregations[$recipient['email']] ??= [];
+                    $aggregations[$recipient['email']][] = ['recipient' => $recipient, 'substitutions' => $substitutions];
+                } else {
 
-                try {
-                    $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
-                    $mailer->addRecipient($recipient['email']);
-                    $mailer->addTemplateData($substitutions);
-                    $mailer->send();
-                } catch (MailDisabledException | phpMailerException $exception) {
                     try {
-                        $this->logTask($jLanguage->_($exception->getMessage()));
-                    } catch (\RuntimeException) {
-                        return Status::KNOCKOUT;
+                        $mailer = new MailTemplate('plg_task_reviewcontentnotification.second_notification_mail', $recipient['language']);
+                        $mailer->addRecipient($recipient['email']);
+                        $mailer->addTemplateData($substitutions);
+                        $mailer->send();
+                    } catch (MailDisabledException | phpMailerException $exception) {
+                        try {
+                            $this->logTask($jLanguage->_($exception->getMessage()));
+                        } catch (\RuntimeException) {
+                            return Status::KNOCKOUT;
+                        }
                     }
                 }
             }
@@ -303,9 +330,74 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             // The article has been processed the second time we can mark it now with the logging database
             $this->markSecondEmailAsSendInLogTable($secondNotificationValue->id);
         }
+        $ret = $this->sendAggregations($aggregations, $dateModifier, 'plg_task_reviewcontentnotification.second_notification_mail', $jLanguage);
+        if ($ret !== Status::OK) {
+            return $ret;
+        }
 
+        $aggregations = [];
         $this->logTask('ReviewContentNotification end');
 
+        return Status::OK;
+    }
+
+    private function sendAggregations($aggregations, $dateModifier, $template, $jLanguage)
+    {
+
+        if (!$aggregations) {
+            return;
+        }
+
+        foreach ($aggregations as $email => $recipientAggreations) {
+            $substitutions = array_column($recipientAggreations, 'substitutions');
+            $recipient = $recipientAggreations[0]['recipient'];
+
+
+
+            $listTemplate = Text::_('PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATION_TEMPLATE');
+            $list = array_map(fn($substitution) =>
+            str_replace(
+                [
+                    '{TITLE}',
+                    '{PUBLIC_URL}',
+                    '{LAST_MODIFIED}',
+                    '{CREATED}',
+                    '{EDIT_URL}',
+                    '{BACKEND_URL}',
+                ],
+                [
+                    $substitution['title'],
+                    $substitution['public_url'],
+                    $substitution['last_modified'],
+                    $substitution['created'],
+                    $substitution['edit_url'],
+                    $substitution['backend_url'],
+                ],
+                $listTemplate
+            ), $substitutions);
+
+
+            $substitutions = [
+                'list'         => join("\n", $list),
+                'sitename'      => $this->getApplication()->get('sitename'),
+                'url'           => str_replace('/administrator', '', Uri::base()),
+                'date_modifier' => $dateModifier,
+            ];
+
+
+            try {
+                $mailer = new MailTemplate($template, $recipient['language']);
+                $mailer->addRecipient($recipient['email']);
+                $mailer->addTemplateData($substitutions);
+                $mailer->send();
+            } catch (MailDisabledException | phpMailerException $exception) {
+                try {
+                    $this->logTask($jLanguage->_($exception->getMessage()));
+                } catch (\RuntimeException) {
+                    return Status::KNOCKOUT;
+                }
+            }
+        }
         return Status::OK;
     }
 
