@@ -103,6 +103,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $whoEmail               = $event->getArgument('params')->who_email ?? 'created';
         $aggretateEmail               = (bool)($event->getArgument('params')->aggregate_email ?? false);
         $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
+        $aggretateEmail               = (bool)($event->getArgument('params')->aggregate_email ?? false);
 
         // Get all articles to send notifications about
         $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $categoriesInclude, $dateModifierType, $limitItemsPerRun);
@@ -124,10 +125,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         }
 
         $aggregations = [];
-        $aggretateEmail               = (bool)($event->getArgument('params')->aggregate_email ?? false);
-        if (\count($articlesToNotify) == 1) {
-            $aggretateEmail = false;
-        }
+
 
 
         /*
@@ -233,10 +231,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             return Status::OK;
         }
 
-        $aggretateEmail               = (bool)($event->getArgument('params')->aggregate_email ?? false);
-        if (\count($secondNotificataionArticles) == 1) {
-            $aggretateEmail = false;
-        }
 
         // Collect information and send the second eMails
         foreach ($secondNotificataionArticles as $key => $secondNotificationValue) {
