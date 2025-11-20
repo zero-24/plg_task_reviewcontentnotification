@@ -440,8 +440,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             ->where($db->quoteName('modified') . ' < :minimum_datetime')
             // Get only published articles
             ->whereIn($db->quoteName('state'), ['1'])
-            // Get only artilces from a given category
-            ->whereIn($db->quoteName('catid'), $categoriesToCheck)
             ->setLimit($limit)
             ->bind(':minimum_datetime', $minimumDatetime->toSQL(), ParameterType::STRING);
 
