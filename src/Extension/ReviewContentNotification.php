@@ -421,7 +421,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         // Set the date to the base time for checking the item
         $minimumDatetime = new Date('now');
         $minimumDatetime->modify('-' . $dateModifier . ' ' . $dateModifierType);
-
+        $minimumDatetimeSql = $minimumDatetime->toSQL();
 
 
         // First get all items from the already send table
@@ -441,7 +441,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             // Get only published articles
             ->whereIn($db->quoteName('state'), $states)
             ->setLimit($limit)
-            ->bind(':minimum_datetime', $minimumDatetime->toSQL(), ParameterType::STRING);
+            ->bind(':minimum_datetime', $minimumDatetimeSql, ParameterType::STRING);
 
         if (!empty($categoriesToCheck)) {
             if ($categoriesInclude) {
