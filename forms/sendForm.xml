@@ -79,11 +79,11 @@
 				name="limit_items_per_run"
 				type="number"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_LIMIT_ITEMS_PER_RUN_LABEL"
-				min="10"
-				step="10"
+				min="5"
+				step="5"
 				max="500"
 				default="20"
-				hint="0"
+				hint="20"
 				validate="number"
 				filter="integer"
 			/>
@@ -94,6 +94,18 @@
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_EMAIL_DESC"
 				default=""
 			/>
+				<field
+				name="who_email"
+				type="list"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION__WHO_EMAIL_LBL"
+				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_DESC"
+				default="created"
+				validate="options"
+			>
+		        <option value="none">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_NONE</option>
+				<option value="created">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_CREATED</option>
+				<option value="modified">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_MODIFIED</option>
+			</field>
 			<field
 				name="language_override"
 				type="language"

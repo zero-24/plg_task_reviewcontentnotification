@@ -99,6 +99,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $categoriesToCheck      = $event->getArgument('params')->categories_to_check ?? [];
         $limitItemsPerRun       = $event->getArgument('params')->limit_items_per_run ?? 20;
         $specificEmail          = $event->getArgument('params')->email ?? '';
+        $whoEmail               = $event->getArgument('params')->who_email ?? 'created';
         $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
 
         // Get all articles to send notifications about
@@ -120,12 +121,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             return Status::OK;
         }
 
-        // Build the Backend URL
-        $baseURL  = Uri::base();
-        $baseURL  = rtrim($baseURL, '/');
-        $baseURL .= (!str_ends_with($baseURL, 'administrator')) ? '/administrator/' : '/';
-        $baseURL .= 'index.php';
-        $backendURL = new Uri($baseURL);
 
         /**
          * Some third party security solutions require a secret query parameter to allow log in to the administrator
@@ -156,8 +151,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         foreach ($articlesToNotify as $articleId => $articleValue) {
             // Let's find out the email addresses to notify
-            $recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $articleValue, $forcedLanguage);
-
+            $recipients = $this->getRecipientsArray($specificEmail, $whoEmail, $currentSiteLanguage, $articleValue, $forcedLanguage);
             if (empty($recipients)) {
                 $this->logTask('Empty recipients for article id: ' . $articleValue->id);
 
@@ -180,8 +174,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'url'           => str_replace('/administrator', '', Uri::base()),
                     'last_modified' => Factory::getDate($articleValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'created'       => Factory::getDate($articleValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
-                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
-                    'backend_url'   => $backendURL->toString(),
+                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), false, 0, true),
+                    'backend_url'    => Route::link('administrator', 'index.php?option=com_content&task=article.edit&id=' . $articleValue->id, false, 0, true),
                     'date_modifier' => $dateModifier,
                 ];
 
@@ -200,6 +194,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             }
 
             $this->addArticleToTheLogTable($articleValue->id, $secondDateModifier, $secondDateModifierType);
+            
         }
 
         // SECOND NOTIFICATIONS
@@ -243,7 +238,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             }
 
             // Let's find out the email addresses to notify
-            $recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $secondNotificationValue, $forcedLanguage);
+            $recipients = $this->getRecipientsArray($specificEmail, $whoEmail, $currentSiteLanguage, $secondNotificationValue, $forcedLanguage);
 
             if (empty($recipients)) {
                 $this->logTask('Empty recipients for article id: ' . $articleValue->id);
@@ -267,8 +262,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'url'           => str_replace('/administrator', '', Uri::base()),
                     'last_modified' => Factory::getDate($secondNotificationValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'created'       => Factory::getDate($secondNotificationValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
-                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $secondNotificationValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
-                    'backend_url'   => $backendURL->toString(),
+                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $secondNotificationValue->id . '&return=' . base64_encode(Uri::base()), false, 0, true),
+                    'backend_url'   => Route::link('administrator', 'index.php?option=com_content&task=article.edit&id=' . $secondNotificationValue->id, false, 0, true),
                     'date_modifier' => $dateModifier,
                 ];
 
@@ -568,6 +563,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      * Method to return the last notification date for a given article ID
      *
      * @param  string      $specificEmail        The configuration setting with the specific emails
+     * @param  string      $whoEmail             Who should receice the notification
      * @param  string      $currentSiteLanguage  The current defaut site language
      * @param  \stdClass   $articleObject        The current article object from the database
      * @param  string      $forcedLanguage       The language to force on the eMail
@@ -576,7 +572,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
      * @since  1.0.1
      */
-    private function getRecipientsArray($specificEmail, $currentSiteLanguage, $articleObject, $forcedLanguage): array
+    private function getRecipientsArray($specificEmail, $whoEmail, $currentSiteLanguage, $articleObject, $forcedLanguage): array
     {
         $recipients = [];
 
@@ -584,12 +580,28 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $specificEmails = explode(',', $specificEmail);
 
             foreach ($specificEmails as $value) {
-                $recipients[] = ['email' => $value, 'language' => $currentSiteLanguage];
+                if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                    $recipients[] = ['email' => $value, 'language' =>  empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage];
+                }
             }
         }
 
+        if ($whoEmail == 'none') {
+            if (\count($recipients) && $whoEmail == 'none') {
+                return $recipients;
+            }
+            $whoEmail == 'created';
+        }
+
+        if ($whoEmail == 'modified') {
+            $user = $articleObject->modified_by ?? 0;
+        }
+
+        if ($whoEmail == 'created' || $user == 0) {
+            $user = $articleObject->created_by ?? 0;
+        }
         // Add the author URL for article
-        if (!empty($articleObject->created_by)) {
+        if ($user > 0) {
             // Take the language from the user or the forcedlanguage based on the configuration
             if ($forcedLanguage === 'user') {
                 $recipients[] = [
