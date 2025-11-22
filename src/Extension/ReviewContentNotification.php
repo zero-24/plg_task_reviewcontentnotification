@@ -100,9 +100,9 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $categoriesInclude      = (bool)($event->getArgument('params')->categories_include ?? true);
         $limitItemsPerRun       = $event->getArgument('params')->limit_items_per_run ?? 20;
         $specificEmail          = $event->getArgument('params')->email ?? '';
-        $whoEmail               = $event->getArgument('params')->who_email ?? ['created'];
+        $whoEmail               = $event->getArgument('params')->who_email ?? [];
         $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
-
+      
         // Get all articles to send notifications about
         $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $categoriesInclude, $dateModifierType, $limitItemsPerRun);
 
@@ -667,7 +667,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 }
             }
         }
-     
+
         return array_values($recipients);
     }
 
