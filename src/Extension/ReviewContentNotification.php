@@ -621,7 +621,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             if ($user > 0) {
                 $userById = Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($user);
                 if ($userById->id !== Null) { //valid user.
-
                     $email = $userById->email;
                     if ($forcedLanguage === 'user') {
                         $language = $userById->getParam('language', $forcedLanguage);
@@ -642,6 +641,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             foreach ($superUsers as $superUser) {
                 // Take the language from the user or the forcedlanguage based on the configuration
                 if ($forcedLanguage === 'user') {
+                    //all these users should be valid. No need to check the result of loadUserById
                     $language = Factory::getContainer()->get(
                         UserFactoryInterface::class
                     )->loadUserById($superUser->id)->getParam('language', $forcedLanguage);
