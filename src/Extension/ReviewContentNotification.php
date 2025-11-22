@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * ReviewContentNotification Task Plugin
  *
@@ -91,22 +93,22 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     private function checkReviewContentNotification(ExecuteTaskEvent $event): int
     {
         // Load the parameters
-        $dateModifier           = $event->getArgument('params')->date_modifier ?? '2';
-        $dateModifierType       = $event->getArgument('params')->date_modifier_type ?? 'years';
-        $secondNotification     = $event->getArgument('params')->second_notification ?? 0;
-        $secondDateModifier     = $event->getArgument('params')->second_date_modifier ?? '2';
-        $secondDateModifierType = $event->getArgument('params')->second_date_modifier_type ?? 'months';
-        $categoriesToCheck      = $event->getArgument('params')->categories_to_check ?? [];
-        $categoriesInclude      = (bool)($event->getArgument('params')->categories_include ?? true);
-        $limitItemsPerRun       = $event->getArgument('params')->limit_items_per_run ?? 20;
-        $specificEmail          = $event->getArgument('params')->email ?? '';
-        $whoEmail               = $event->getArgument('params')->who_email ?? [];
-        $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
+        $dateModifier                 = $event->getArgument('params')->date_modifier ?? '2';
+        $dateModifierType             = $event->getArgument('params')->date_modifier_type ?? 'years';
+        $secondNotification           = $event->getArgument('params')->second_notification ?? 0;
+        $secondDateModifier           = $event->getArgument('params')->second_date_modifier ?? '2';
+        $secondDateModifierType       = $event->getArgument('params')->second_date_modifier_type ?? 'months';
+        $categoriesToCheck            = $event->getArgument('params')->categories_to_check ?? [];
+        $categoriesInclude            = (bool)($event->getArgument('params')->categories_include ?? true);
+        $limitItemsPerRun             = $event->getArgument('params')->limit_items_per_run ?? 20;
+        $specificEmail                = $event->getArgument('params')->email ?? '';
+        $whoEmail                     = $event->getArgument('params')->who_email ?? [];
+        $forcedLanguage               = $event->getArgument('params')->language_override ?? 'user';
         $aggretateEmail               = (bool)($event->getArgument('params')->aggregate_email ?? false);
         // Get all articles to send notifications about
         $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $categoriesInclude, $dateModifierType, $limitItemsPerRun);
 
-        if (is_array($articlesToNotify)) {
+        if (\is_array($articlesToNotify)) {
             $limitItemsPerRun -= \count($articlesToNotify);
         }
 
@@ -114,7 +116,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $secondNotificataionArticles = $this->getArticlesToSendSecondNotificationFor($categoriesToCheck, $categoriesInclude, $limitItemsPerRun);
 
         // If there are no articles to send notifications to we don't have to notify anyone about anything. This is NOT a duplicate check.
-        if ((empty($articlesToNotify) || $articlesToNotify === false) &&
+        if (
+            (empty($articlesToNotify) || $articlesToNotify === false) &&
             (empty($secondNotificataionArticles) || $secondNotificataionArticles === false)
         ) {
             $this->logTask('ReviewContentNotification end');
@@ -180,14 +183,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'last_modified' => Factory::getDate($articleValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'created'       => Factory::getDate($articleValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), false, 0, true),
-                    'backend_url'    => $backendURL,
+                    'backend_url'   => $backendURL,
                     'date_modifier' => $dateModifier,
                 ];
                 if ($aggretateEmail) {
                     $aggregations[$recipient['email']] ??= [];
                     $aggregations[$recipient['email']][] = ['recipient' => $recipient, 'substitutions' => $substitutions];
                 } else {
-
                     try {
                         $mailer = new MailTemplate('plg_task_reviewcontentnotification.not_modified_mail', $recipient['language']);
                         $mailer->addRecipient($recipient['email']);
@@ -232,7 +234,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         // Collect information and send the second eMails
         foreach ($secondNotificataionArticles as $key => $secondNotificationValue) {
             $lastNotificationDate = new Date($this->getLastNotificationDateByArticleId($secondNotificationValue->id));
-            $articleLastModifed = new Date($secondNotificationValue->modified);
+            $articleLastModifed   = new Date($secondNotificationValue->modified);
 
             if ($articleLastModifed > $lastNotificationDate) {
                 // The article has been modified between the last notification and today, remove it from the log table and continue
@@ -248,7 +250,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
             // Check whether we need to send the second email now
             $secondNotificationDate = new Date($this->getSecondNotificationDateByArticleId($secondNotificationValue->id));
-            $today = new Date('now');
+            $today                  = new Date('now');
 
             if ($secondNotificationDate > $today) {
                 continue;
@@ -302,7 +304,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     $aggregations[$recipient['email']] ??= [];
                     $aggregations[$recipient['email']][] = ['recipient' => $recipient, 'substitutions' => $substitutions];
                 } else {
-
                     try {
                         $mailer = new MailTemplate('plg_task_reviewcontentnotification.second_notification_mail', $recipient['language']);
                         $mailer->addRecipient($recipient['email']);
@@ -341,13 +342,12 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         foreach ($aggregations as $email => $recipientAggreations) {
             $substitutions = array_column($recipientAggreations, 'substitutions');
-            $recipient = $recipientAggreations[0]['recipient'];
+            $recipient     = $recipientAggreations[0]['recipient'];
 
 
 
             $listTemplate = Text::_('PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATION_TEMPLATE');
-            $list = array_map(fn($substitution) =>
-            str_replace(
+            $list         = array_map(fn ($substitution) => str_replace(
                 [
                     '{TITLE}',
                     '{PUBLIC_URL}',
@@ -369,7 +369,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
 
             $substitutions = [
-                'list'         => join("\n", $list),
+                'list'          => join("\n", $list),
                 'sitename'      => $this->getApplication()->get('sitename'),
                 'url'           => str_replace('/administrator', '', Uri::base()),
                 'date_modifier' => $dateModifier,
@@ -515,7 +515,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         $db->setQuery($query);
         $alreadySendToArticleIds = $db->loadColumn();
-        $states = ['1'];
+        $states                  = ['1'];
         // Check the Content Items that should be informed
         $query = $db->getQuery(true)
             ->select($db->quoteName(['id', 'title', 'created', 'modified', 'catid', 'created_by', 'state', 'language']))
@@ -558,13 +558,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      */
     private function addArticleToTheLogTable($articleId, $secondDateModifier, $secondDateModifierType)
     {
-        $today = new Date('now');
+        $today              = new Date('now');
         $secondNotification = new Date('now');
         $secondNotification->modify('+' . $secondDateModifier . ' ' . $secondDateModifierType);
 
-        $articleLogEntry = new \stdClass();
-        $articleLogEntry->article_id = $articleId;
-        $articleLogEntry->last_notification = $today->toSQL();
+        $articleLogEntry                      = new \stdClass();
+        $articleLogEntry->article_id          = $articleId;
+        $articleLogEntry->last_notification   = $today->toSQL();
         $articleLogEntry->second_notification = $secondNotification->toSQL();
 
         return $this->getDatabase()->insertObject('#__content_reviewcontentnotification', $articleLogEntry);
@@ -586,7 +586,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         if ($limit <= 0) {
             return [];
         }
-        $today = new Date('now');
+        $today    = new Date('now');
         $todaySql = $today->toSQL();
         // Set the date to the base time for checking the item
         // First get all items from the already send table
@@ -600,7 +600,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         $db->setQuery($query);
         $alreadySendToArticleIds = $db->loadColumn();
-        $states = ['1'];
+        $states                  = ['1'];
         // Check the Content Items that should be informed
         $query = $db->getQuery(true)
             ->select($db->quoteName(['id', 'title', 'created', 'modified', 'catid', 'created_by', 'state', 'language']))
@@ -692,7 +692,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     {
         $recipients = [];
 
-        //prepare  the value of forcedLanguage for future use. 
+        //prepare  the value of forcedLanguage for future use.
         //forcedLanguage is used as a 'boolean' as well as value
         if ($forcedLanguage !== 'user') {
             $forcedLanguage =  empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage;
@@ -707,11 +707,11 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             }
         }
         $users = [];
-        if (in_array('created', $whoEmail)) {
+        if (\in_array('created', $whoEmail)) {
             $users[] = $articleObject->created_by ?? 0;
         }
 
-        if (in_array('modified', $whoEmail)) {
+        if (\in_array('modified', $whoEmail)) {
             $users[] = $articleObject->modified_by ?? 0;
         }
 
@@ -719,7 +719,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             // Add the author URL for article
             if ($user > 0) {
                 $userById = Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($user);
-                if ($userById->id !== Null) { //valid user.
+                if ($userById->id !== null) { //valid user.
                     $email = $userById->email;
                     if ($forcedLanguage === 'user') {
                         $language = $userById->getParam('language', $forcedLanguage);
@@ -727,15 +727,14 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                         $language =   $forcedLanguage;
                     }
                     //avoid duplicates by using $email as key.
-                    $recipients[$email] = ['email' => $email, 'language' =>  $language];
+                    $recipients[$email] = ['email' => $email, 'language' => $language];
                 }
                 // Take the language from the user or the forcedlanguage based on the configuration
-
             }
         }
 
         // Add the super users to when we have not got any recipients until now or if configured
-        if (in_array('super', $whoEmail) || empty($recipients)) {
+        if (\in_array('super', $whoEmail) || empty($recipients)) {
             $superUsers = $this->getSuperUsers();
             foreach ($superUsers as $superUser) {
                 // Take the language from the user or the forcedlanguage based on the configuration
@@ -746,7 +745,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     )->loadUserById($superUser->id)->getParam('language', $forcedLanguage);
                     $recipients[$superUser->email] = ['email' => $superUser->email, 'language' => $language];
                 } else {
-                    //this avoid duplicates. 
+                    //this avoid duplicates.
                     $recipients[$superUser->email] = ['email' => $superUser->email, 'language' => $forcedLanguage];
                 }
             }
@@ -790,8 +789,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     {
         $today = new Date('now');
 
-        $articleLogEntry = new \stdClass();
-        $articleLogEntry->article_id = $articleId;
+        $articleLogEntry                           = new \stdClass();
+        $articleLogEntry->article_id               = $articleId;
         $articleLogEntry->second_notification_send = $today->toSQL();
 
         return $this->getDatabase()->updateObject('#__content_reviewcontentnotification', $articleLogEntry, 'article_id');
