@@ -97,7 +97,7 @@
 				<field
 				name="who_email"
 				type="list"
-				label="PLG_TASK_REVIEWCONTENTNOTIFICATION__WHO_EMAIL_LBL"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_LABEL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_DESC"
 				default="created"
 				validate="options"
