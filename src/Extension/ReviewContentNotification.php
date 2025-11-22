@@ -100,7 +100,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $categoriesInclude      = (bool)($event->getArgument('params')->categories_include ?? true);
         $limitItemsPerRun       = $event->getArgument('params')->limit_items_per_run ?? 20;
         $specificEmail          = $event->getArgument('params')->email ?? '';
-        $whoEmail               = $event->getArgument('params')->who_email ?? 'created';
+        $whoEmail               = $event->getArgument('params')->who_email ?? ['created'];
         $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
 
         // Get all articles to send notifications about
@@ -143,7 +143,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $recipients = $this->getRecipientsArray($specificEmail, $whoEmail, $currentSiteLanguage, $articleValue, $forcedLanguage);
             if (empty($recipients)) {
                 $this->logTask('Empty recipients for article id: ' . $articleValue->id);
-
                 continue;
             }
 
@@ -596,7 +595,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      * Method to return the last notification date for a given article ID
      *
      * @param  string      $specificEmail        The configuration setting with the specific emails
-     * @param  string      $whoEmail             Who should receice the notification
+     * @param  array      $whoEmail             Who should receice the notification
      * @param  string      $currentSiteLanguage  The current defaut site language
      * @param  \stdClass   $articleObject        The current article object from the database
      * @param  string      $forcedLanguage       The language to force on the eMail
@@ -609,66 +608,67 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     {
         $recipients = [];
 
+        //prepare  the value of forcedLanguage for future use. 
+        //forcedLanguage is used as a 'boolean' as well as value
+        if ($forcedLanguage !== 'user') {
+            $forcedLanguage =  empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage;
+        }
+
         if (!empty($specificEmail)) {
             $specificEmails = explode(',', $specificEmail);
-
             foreach ($specificEmails as $value) {
                 if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                    $recipients[] = ['email' => $value, 'language' =>  empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage];
+                    $recipients[$value] = ['email' => $value, 'language' => $forcedLanguage];
                 }
             }
         }
-
-        if ($whoEmail == 'none') {
-            if (\count($recipients) && $whoEmail == 'none') {
-                return $recipients;
-            }
-            $whoEmail == 'created';
+        $users = [];
+        if (in_array('created', $whoEmail)) {
+            $users[] = $articleObject->created_by ?? 0;
         }
 
-        if ($whoEmail == 'modified') {
-            $user = $articleObject->modified_by ?? 0;
+        if (in_array('modified', $whoEmail)) {
+            $users[] = $articleObject->modified_by ?? 0;
         }
 
-        if ($whoEmail == 'created' || $user == 0) {
-            $user = $articleObject->created_by ?? 0;
-        }
-        // Add the author URL for article
-        if ($user > 0) {
-            // Take the language from the user or the forcedlanguage based on the configuration
-            if ($forcedLanguage === 'user') {
-                $recipients[] = [
-                    'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->email,
-                    'language' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->getParam('language', $currentSiteLanguage)
-                ];
-            } else {
-                $recipients[] = [
-                    'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->email,
-                    'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage
-                ];
+        foreach ($users as $user) {
+            // Add the author URL for article
+            if ($user > 0) {
+                $userById = Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($user);
+                if ($userById->id !== Null) { //valid user.
+                    $email = $userById->email;
+                    if ($forcedLanguage === 'user') {
+                        $language = $userById->getParam('language', $forcedLanguage);
+                    } else {
+                        $language =   $forcedLanguage;
+                    }
+                    //avoid duplicates by using $email as key.
+                    $recipients[$email] = ['email' => $email, 'language' =>  $language];
+                }
+                // Take the language from the user or the forcedlanguage based on the configuration
+
             }
         }
 
-        // Add the super users to when we have not got any recipients until now
-        if (empty($recipients)) {
+        // Add the super users to when we have not got any recipients until now or if configured
+        if (in_array('super', $whoEmail) || empty($recipients)) {
             $superUsers = $this->getSuperUsers();
-
             foreach ($superUsers as $superUser) {
                 // Take the language from the user or the forcedlanguage based on the configuration
                 if ($forcedLanguage === 'user') {
-                    $recipients[] = [
-                        'email' => $superUser->email,
-                        'language' => Factory::getContainer()->get(
-                            UserFactoryInterface::class
-                        )->loadUserById($superUser->id)->getParam('language', $currentSiteLanguage)
-                    ];
+                    //all these users should be valid. No need to check the result of loadUserById
+                    $language = Factory::getContainer()->get(
+                        UserFactoryInterface::class
+                    )->loadUserById($superUser->id)->getParam('language', $forcedLanguage);
+                    $recipients[$superUser->email] = ['email' => $superUser->email, 'language' => $language];
                 } else {
-                    $recipients[] = ['email' => $superUser->email, 'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage];
+                    //this avoid duplicates. 
+                    $recipients[$superUser->email] = ['email' => $superUser->email, 'language' => $forcedLanguage];
                 }
             }
         }
-
-        return $recipients;
+     
+        return array_values($recipients);
     }
 
     /**
