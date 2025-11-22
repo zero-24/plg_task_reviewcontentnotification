@@ -80,7 +80,7 @@
 				type="number"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_LIMIT_ITEMS_PER_RUN_LABEL"
 				min="5"
-				step="5"
+				step="1"
 				max="500"
 				default="20"
 				hint="20"
