@@ -94,7 +94,7 @@
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_EMAIL_DESC"
 				default=""
 			/>
-				<field
+			<field
 				name="who_email"
 				type="list"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_LABEL"
