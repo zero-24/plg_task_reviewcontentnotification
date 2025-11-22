@@ -102,7 +102,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $specificEmail          = $event->getArgument('params')->email ?? '';
         $whoEmail               = $event->getArgument('params')->who_email ?? [];
         $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
-      
+
         // Get all articles to send notifications about
         $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $categoriesInclude, $dateModifierType, $limitItemsPerRun);
 
@@ -120,6 +120,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $this->logTask('ReviewContentNotification end');
 
             return Status::OK;
+        }
+
+        if ($this->getApplication()->isClient('cli') && '' === $this->getApplication()->get('live_site', '')) {
+            $this->getApplication()->enqueueMessage(Text::_('PLG_TASK_REVIEWCONTENTNOTIFICATION_MISSING_LIVE_SITE'), 'warning');
+            $liveSite = '/';
+        } else {
+            $liveSite = str_replace('/administrator', '', Uri::base());
         }
 
 
@@ -174,7 +181,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'title'         => $articleValue->title,
                     'public_url'    => Route::link('site', $contentUrl, true, 0, true),
                     'sitename'      => $this->getApplication()->get('sitename'),
-                    'url'           => str_replace('/administrator', '', Uri::base()),
+                    'url'           => $liveSite,
                     'last_modified' => Factory::getDate($articleValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'created'       => Factory::getDate($articleValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), false, 0, true),
@@ -277,7 +284,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'title'         => $secondNotificationValue->title,
                     'public_url'    => Route::link('site', $contentUrl, true, 0, true),
                     'sitename'      => $this->getApplication()->get('sitename'),
-                    'url'           => str_replace('/administrator', '', Uri::base()),
+                    'url'           => $liveSite,
                     'last_modified' => Factory::getDate($secondNotificationValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'created'       => Factory::getDate($secondNotificationValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $secondNotificationValue->id . '&return=' . base64_encode(Uri::base()), false, 0, true),
