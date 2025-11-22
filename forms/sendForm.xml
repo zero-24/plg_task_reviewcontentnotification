@@ -79,6 +79,7 @@
 				name="limit_items_per_run"
 				type="number"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_LIMIT_ITEMS_PER_RUN_LABEL"
+				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_LIMIT_ITEMS_PER_RUN_DESC"
 				min="5"
 				step="1"
 				max="500"

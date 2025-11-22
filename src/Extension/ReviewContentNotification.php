@@ -592,7 +592,13 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     private function getRecipientsArray($specificEmail, $whoEmail, $currentSiteLanguage, $articleObject, $forcedLanguage): array
     {
         $recipients = [];
-        $forcedLanguage =  empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage;
+
+        //prepare  the value of forcedLanguage for future use. 
+        //forcedLanguage is used as a 'boolean' as well as value
+        if ($forcedLanguage !== 'user') {
+            $forcedLanguage =  empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage;
+        }
+
         if (!empty($specificEmail)) {
             $specificEmails = explode(',', $specificEmail);
             foreach ($specificEmails as $value) {
@@ -646,7 +652,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 }
             }
         }
-
+     
         return array_values($recipients);
     }
 
