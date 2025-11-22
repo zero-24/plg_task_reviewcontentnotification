@@ -91,8 +91,9 @@
 				name="limit_items_per_run"
 				type="number"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_LIMIT_ITEMS_PER_RUN_LABEL"
+				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_LIMIT_ITEMS_PER_RUN_DESC"
 				min="5"
-				step="5"
+				step="1"
 				max="500"
 				default="20"
 				hint="20"
@@ -106,17 +107,18 @@
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_EMAIL_DESC"
 				default=""
 			/>
-				<field
+			<field
 				name="who_email"
-				type="list"
-				label="PLG_TASK_REVIEWCONTENTNOTIFICATION__WHO_EMAIL_LBL"
+				type="checkboxes"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_LABEL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_DESC"
-				default="created"
+				checkedOptions="created"
 				validate="options"
+				multiple="true"
 			>
-		        <option value="none">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_NONE</option>
 				<option value="created">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_CREATED</option>
 				<option value="modified">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_MODIFIED</option>
+				<option value="super">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_SUPER</option>
 			</field>
 			<field
 				name="language_override"
