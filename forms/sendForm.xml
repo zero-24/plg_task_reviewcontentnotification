@@ -96,15 +96,16 @@
 			/>
 			<field
 				name="who_email"
-				type="list"
+				type="checkboxes"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_LABEL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_DESC"
-				default="created"
+				checkedOptions="created"
 				validate="options"
+				multiple="true"
 			>
-		        <option value="none">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_NONE</option>
 				<option value="created">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_CREATED</option>
 				<option value="modified">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_MODIFIED</option>
+				<option value="super">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_SUPER</option>
 			</field>
 			<field
 				name="language_override"
