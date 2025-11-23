@@ -112,7 +112,7 @@
 				type="list"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_LABEL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_DESC"
-				default='["created"]'
+				default="created"
 				validate="options"
 				multiple="true"
 				layout="joomla.form.field.list-fancy-select"
