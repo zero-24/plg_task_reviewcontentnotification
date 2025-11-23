@@ -646,7 +646,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     )->loadUserById($superUser->id)->getParam('language', $forcedLanguage);
                     $recipients[$superUser->email] = ['email' => $superUser->email, 'language' => $language];
                 } else {
-                    //this avoid duplicates. 
+                    // This avoid duplicates. 
                     $recipients[$superUser->email] = ['email' => $superUser->email, 'language' => $forcedLanguage];
                 }
             }
