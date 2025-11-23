@@ -592,7 +592,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $recipients = [];
 
         // Prepare the value of forcedLanguage for future use. 
-        //forcedLanguage is used as a 'boolean' as well as value
+        // forcedLanguage is used as a 'boolean' as well as value
         if ($forcedLanguage !== 'user') {
             $forcedLanguage =  empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage;
         }
