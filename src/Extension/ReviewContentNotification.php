@@ -122,7 +122,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
 
 
-
         /*
          * Load the appropriate language. We try to load English (UK), the current user's language and the forced
          * language preference, in this order. This ensures that we'll never end up with untranslated strings in the
