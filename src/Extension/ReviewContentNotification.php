@@ -606,6 +606,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             }
         }
         $users = [];
+
         if (in_array('created', $whoEmail)) {
             $users[] = $articleObject->created_by ?? 0;
         }
