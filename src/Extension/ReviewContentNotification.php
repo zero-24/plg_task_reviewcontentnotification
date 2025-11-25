@@ -99,8 +99,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $categoriesToCheck      = $event->getArgument('params')->categories_to_check ?? [];
         $limitItemsPerRun       = $event->getArgument('params')->limit_items_per_run ?? 20;
         $specificEmail          = $event->getArgument('params')->email ?? '';
+        $whoEmail               = $event->getArgument('params')->who_email ?? [];
         $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
-
         // Get all articles to send notifications about
         $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $dateModifierType, $limitItemsPerRun);
 
@@ -120,26 +120,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             return Status::OK;
         }
 
-        // Build the Backend URL
-        $baseURL  = Uri::base();
-        $baseURL  = rtrim($baseURL, '/');
-        $baseURL .= (!str_ends_with($baseURL, 'administrator')) ? '/administrator/' : '/';
-        $baseURL .= 'index.php';
-        $backendURL = new Uri($baseURL);
 
-        /**
-         * Some third party security solutions require a secret query parameter to allow log in to the administrator
-         * backend of the site. The link generated above will be invalid and could probably block the user out of their
-         * site, confusing them (they can't understand the third party security solution is not part of Joomla! proper).
-         * So, we're calling the onBuildAdministratorLoginURL system plugin event to let these third party solutions
-         * add any necessary secret query parameters to the URL. The plugins are supposed to have a method with the
-         * signature:
-         *
-         * public function onBuildAdministratorLoginURL(Uri &$uri);
-         *
-         * The plugins should modify the $uri object directly and return null.
-         */
-        $this->getApplication()->triggerEvent('onBuildAdministratorLoginURL', [&$backendURL]);
 
         /*
          * Load the appropriate language. We try to load English (UK), the current user's language and the forced
@@ -156,11 +137,9 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
 
         foreach ($articlesToNotify as $articleId => $articleValue) {
             // Let's find out the email addresses to notify
-            $recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $articleValue, $forcedLanguage);
-
+            $recipients = $this->getRecipientsArray($specificEmail, $whoEmail, $currentSiteLanguage, $articleValue, $forcedLanguage);
             if (empty($recipients)) {
                 $this->logTask('Empty recipients for article id: ' . $articleValue->id);
-
                 continue;
             }
 
@@ -171,6 +150,21 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             foreach ($recipients as $recipient) {
                 // Loading the preferred (forced) language or the site language
                 $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
+                $backendURL = Route::link('administrator', 'index.php?option=com_content&task=article.edit&id=' . $articleValue->id, false, 0, true);
+
+                /**
+                 * Some third party security solutions require a secret query parameter to allow log in to the administrator
+                 * backend of the site. The link generated above will be invalid and could probably block the user out of their
+                 * site, confusing them (they can't understand the third party security solution is not part of Joomla! proper).
+                 * So, we're calling the onBuildAdministratorLoginURL system plugin event to let these third party solutions
+                 * add any necessary secret query parameters to the URL. The plugins are supposed to have a method with the
+                 * signature:
+                 *
+                 * public function onBuildAdministratorLoginURL(Uri &$uri);
+                 *
+                 * The plugins should modify the $uri object directly and return null.
+                 */
+                $this->getApplication()->triggerEvent('onBuildAdministratorLoginURL', [&$backendURL]);
 
                 // Replace merge codes with their values
                 $substitutions = [
@@ -180,8 +174,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'url'           => str_replace('/administrator', '', Uri::base()),
                     'last_modified' => Factory::getDate($articleValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'created'       => Factory::getDate($articleValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
-                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
-                    'backend_url'   => $backendURL->toString(),
+                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $articleValue->id . '&return=' . base64_encode(Uri::base()), false, 0, true),
+                    'backend_url'    => $backendURL,
                     'date_modifier' => $dateModifier,
                 ];
 
@@ -243,7 +237,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             }
 
             // Let's find out the email addresses to notify
-            $recipients = $this->getRecipientsArray($specificEmail, $currentSiteLanguage, $secondNotificationValue, $forcedLanguage);
+            $recipients = $this->getRecipientsArray($specificEmail, $whoEmail, $currentSiteLanguage, $secondNotificationValue, $forcedLanguage);
 
             if (empty($recipients)) {
                 $this->logTask('Empty recipients for article id: ' . $articleValue->id);
@@ -259,6 +253,22 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 // Loading the preferred (forced) language or the site language
                 $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, $recipient['language'], true, false);
 
+                $backendURL = Route::link('administrator', 'index.php?option=com_content&task=article.edit&id=' . $articleValue->id, false, 0, true);
+
+                /**
+                 * Some third party security solutions require a secret query parameter to allow log in to the administrator
+                 * backend of the site. The link generated above will be invalid and could probably block the user out of their
+                 * site, confusing them (they can't understand the third party security solution is not part of Joomla! proper).
+                 * So, we're calling the onBuildAdministratorLoginURL system plugin event to let these third party solutions
+                 * add any necessary secret query parameters to the URL. The plugins are supposed to have a method with the
+                 * signature:
+                 *
+                 * public function onBuildAdministratorLoginURL(Uri &$uri);
+                 *
+                 * The plugins should modify the $uri object directly and return null.
+                 */
+                $this->getApplication()->triggerEvent('onBuildAdministratorLoginURL', [&$backendURL]);
+
                 // Replace merge codes with their values
                 $substitutions = [
                     'title'         => $secondNotificationValue->title,
@@ -267,8 +277,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'url'           => str_replace('/administrator', '', Uri::base()),
                     'last_modified' => Factory::getDate($secondNotificationValue->modified)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
                     'created'       => Factory::getDate($secondNotificationValue->created)->format(Text::_('DATE_FORMAT_FILTER_DATETIME')),
-                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $secondNotificationValue->id . '&return=' . base64_encode(Uri::base()), true, 0, true),
-                    'backend_url'   => $backendURL->toString(),
+                    'edit_url'      => Route::link('site', $contentUrl . '&task=article.edit&a_id=' . $secondNotificationValue->id . '&return=' . base64_encode(Uri::base()), false, 0, true),
+                    'backend_url'   => $backendURL,
                     'date_modifier' => $dateModifier,
                 ];
 
@@ -568,6 +578,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      * Method to return the last notification date for a given article ID
      *
      * @param  string      $specificEmail        The configuration setting with the specific emails
+     * @param  array      $whoEmail             Who should receice the notification
      * @param  string      $currentSiteLanguage  The current defaut site language
      * @param  \stdClass   $articleObject        The current article object from the database
      * @param  string      $forcedLanguage       The language to force on the eMail
@@ -576,54 +587,72 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
      * @since  1.0.1
      */
-    private function getRecipientsArray($specificEmail, $currentSiteLanguage, $articleObject, $forcedLanguage): array
+    private function getRecipientsArray($specificEmail, $whoEmail, $currentSiteLanguage, $articleObject, $forcedLanguage): array
     {
         $recipients = [];
 
+        // Prepare the value of forcedLanguage for future use. 
+        // forcedLanguage is used as a 'boolean' as well as value
+        if ($forcedLanguage !== 'user') {
+            $forcedLanguage =  empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage;
+        }
+
         if (!empty($specificEmail)) {
             $specificEmails = explode(',', $specificEmail);
-
             foreach ($specificEmails as $value) {
-                $recipients[] = ['email' => $value, 'language' => $currentSiteLanguage];
+                if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                    $recipients[$value] = ['email' => $value, 'language' => $forcedLanguage];
+                }
+            }
+        }
+        $users = [];
+
+        if (in_array('created', $whoEmail)) {
+            $users[] = $articleObject->created_by ?? 0;
+        }
+
+        if (in_array('modified', $whoEmail)) {
+            $users[] = $articleObject->modified_by ?? 0;
+        }
+
+        foreach ($users as $user) {
+            // Add the author URL for article
+            if ($user > 0) {
+                $userById = Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($user);
+                if ($userById->id !== Null) { //valid user.
+                    $email = $userById->email;
+                    if ($forcedLanguage === 'user') {
+                        $language = $userById->getParam('language', $forcedLanguage);
+                    } else {
+                        $language =   $forcedLanguage;
+                    }
+                    //avoid duplicates by using $email as key.
+                    $recipients[$email] = ['email' => $email, 'language' =>  $language];
+                }
+                // Take the language from the user or the forcedlanguage based on the configuration
+
             }
         }
 
-        // Add the author URL for article
-        if (!empty($articleObject->created_by)) {
-            // Take the language from the user or the forcedlanguage based on the configuration
-            if ($forcedLanguage === 'user') {
-                $recipients[] = [
-                    'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->email,
-                    'language' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->getParam('language', $currentSiteLanguage)
-                ];
-            } else {
-                $recipients[] = [
-                    'email' => Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById($articleObject->created_by)->email,
-                    'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage
-                ];
-            }
-        }
-
-        // Add the super users to when we have not got any recipients until now
-        if (empty($recipients)) {
+        // Add the super users to when we have not got any recipients until now or if configured
+        if (in_array('super', $whoEmail) || empty($recipients)) {
             $superUsers = $this->getSuperUsers();
-
             foreach ($superUsers as $superUser) {
                 // Take the language from the user or the forcedlanguage based on the configuration
                 if ($forcedLanguage === 'user') {
-                    $recipients[] = [
-                        'email' => $superUser->email,
-                        'language' => Factory::getContainer()->get(
-                            UserFactoryInterface::class
-                        )->loadUserById($superUser->id)->getParam('language', $currentSiteLanguage)
-                    ];
+                    //all these users should be valid. No need to check the result of loadUserById
+                    $language = Factory::getContainer()->get(
+                        UserFactoryInterface::class
+                    )->loadUserById($superUser->id)->getParam('language', $forcedLanguage);
+                    $recipients[$superUser->email] = ['email' => $superUser->email, 'language' => $language];
                 } else {
-                    $recipients[] = ['email' => $superUser->email, 'language' => empty($forcedLanguage) ? $currentSiteLanguage : $forcedLanguage];
+                    // This avoid duplicates. 
+                    $recipients[$superUser->email] = ['email' => $superUser->email, 'language' => $forcedLanguage];
                 }
             }
         }
 
-        return $recipients;
+        return array_values($recipients);
     }
 
     /**
