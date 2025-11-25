@@ -2,8 +2,7 @@
 <form>
 	<fields name="params">
 		<fieldset name="task_params">
-			<field
-				name="date_modifier"
+			<field name="date_modifier"
 				type="number"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_LABEL"
 				min="1"
@@ -12,32 +11,26 @@
 				hint="2"
 				required="true"
 				validate="number"
-				filter="integer"
-			/>
-			<field
-				name="date_modifier_type"
+				filter="integer" />
+			<field name="date_modifier_type"
 				type="list"
 				required="true"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_LABEL"
 				default="years"
-				validate="options"
-			>
+				validate="options">
 				<option value="days">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_DAYS</option>
 				<option value="months">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_MONTHS</option>
 				<option value="years">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_YEARS</option>
 			</field>
-			<field
-				name="second_notification"
+			<field name="second_notification"
 				type="radio"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_SECOND_NOTIFICATION_LABEL"
 				layout="joomla.form.field.radio.switcher"
-				default="0"
-				>
+				default="0">
 				<option value="0">JNO</option>
 				<option value="1">JYES</option>
 			</field>
-			<field
-				name="second_date_modifier"
+			<field name="second_date_modifier"
 				type="number"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_SECOND_DATE_MODIFIER_LABEL"
 				min="1"
@@ -47,23 +40,19 @@
 				required="true"
 				validate="number"
 				filter="integer"
-				showon="second_notification:1"
-			/>
-			<field
-				name="second_date_modifier_type"
+				showon="second_notification:1" />
+			<field name="second_date_modifier_type"
 				type="list"
 				required="true"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_SECOND_DATE_MODIFIER_TYPE_LABEL"
 				default="months"
 				validate="options"
-				showon="second_notification:1"
-			>
+				showon="second_notification:1">
 				<option value="days">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_DAYS</option>
 				<option value="months">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_MONTHS</option>
 				<option value="years">PLG_TASK_REVIEWCONTENTNOTIFICATION_DATE_MODIFIER_TYPE_YEARS</option>
 			</field>
-			<field
-				name="categories_to_check"
+			<field name="categories_to_check"
 				type="category"
 				required="false"
 				label="JCATEGORY"
@@ -73,22 +62,19 @@
 				class="multipleCategories"
 				layout="joomla.form.field.list-fancy-select"
 				hint="JOPTION_SELECT_CATEGORY"
-				published="1"
-			/>
-			 <field 
-			    name="categories_include" 
-				type="radio" default="1" 
-				layout="joomla.form.field.radio.switcher" 
-				filter="integer" 
+				published="1" />
+			<field name="categories_include"
+				type="radio"
+				default="1"
+				layout="joomla.form.field.radio.switcher"
+				filter="integer"
 				showon="categories_to_check!:"
-				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_CATEGORIES_INCLUDE_LBL" 
-				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_CATEGORIES_INCLUDE_DESC"
-			>
-          <option value="0">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_EXCLUDE</option>
-          <option value="1">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_INCLUDE</option>
-        </field>
-			<field
-				name="limit_items_per_run"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_CATEGORIES_INCLUDE_LBL"
+				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_CATEGORIES_INCLUDE_DESC">
+				<option value="0">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_EXCLUDE</option>
+				<option value="1">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_INCLUDE</option>
+			</field>
+			<field name="limit_items_per_run"
 				type="number"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_LIMIT_ITEMS_PER_RUN_LABEL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_LIMIT_ITEMS_PER_RUN_DESC"
@@ -98,39 +84,43 @@
 				default="20"
 				hint="20"
 				validate="number"
-				filter="integer"
-			/>
-			<field
-				name="email"
+				filter="integer" />
+			<field name="email"
 				type="text"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_EMAIL_LBL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_EMAIL_DESC"
-				default=""
-			/>
-			<field
-				name="who_email"
+				default="" />
+			<field name="who_email"
 				type="list"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_LABEL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_DESC"
 				default="created"
 				validate="options"
 				multiple="true"
-				layout="joomla.form.field.list-fancy-select"
-			>
+				layout="joomla.form.field.list-fancy-select">
 				<option value="created">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_CREATED</option>
 				<option value="modified">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_MODIFIED</option>
 				<option value="super">PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_SUPER</option>
 			</field>
-			<field
-				name="language_override"
+			<field name="language_override"
 				type="language"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_LBL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_DESC"
 				default="user"
-				client="administrator"
-			>
+				client="administrator">
 				<option value="">PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_NONE</option>
 				<option value="user">PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_USER</option>
+			</field>
+
+			<field name="aggregate_email"
+				type="radio"
+				default="0"
+				layout="joomla.form.field.radio.switcher"
+				filter="integer"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATE_EMAIL_LBL"
+				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATE_EMAIL_DESC">
+				<option value="0">JNO</option>
+				<option value="1">JYES</option>
 			</field>
 		</fieldset>
 	</fields>
