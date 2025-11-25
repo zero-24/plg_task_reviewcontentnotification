@@ -489,7 +489,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      * Method to return the content artices that we need to notify the second time
      *
      * @param  array   $categoriesToCheck  The categories that should be checked
-     * @param  bool   $categoriesInclude  Include or Exclude categories
+     * @param  bool    $categoriesInclude  Include or Exclude categories
      * @param  int     $limit              Limit the result list for this task run
      *
      * @return array  An array of content articles that we need to notify the created users
