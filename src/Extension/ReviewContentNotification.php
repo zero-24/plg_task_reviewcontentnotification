@@ -404,7 +404,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
      * @param  int     $dateModifier       The date modifier setting from the task needs to be resolved to the actuall value
      * @param  array   $categoriesToCheck  The categories that should be checked
-     * @param  bool   $categoriesInclude  Include or Exclude categories
+     * @param  bool    $categoriesInclude  Include or Exclude categories
      * @param  string  $dateModifierType   The date modifier type like days, months, years
      * @param  int     $limit              Limit the result list for this task run
      *
