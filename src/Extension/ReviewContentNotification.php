@@ -113,7 +113,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $secondNotificataionArticles = $this->getArticlesToSendSecondNotificationFor($categoriesToCheck, $categoriesInclude, $limitItemsPerRun);
 
         // If there are no articles to send notifications to we don't have to notify anyone about anything. This is NOT a duplicate check.
-        if ((empty($articlesToNotify) || $articlesToNotify === false) &&
+        if (
+            (empty($articlesToNotify) || $articlesToNotify === false) &&
             (empty($secondNotificataionArticles) || $secondNotificataionArticles === false)
         ) {
             $this->logTask('ReviewContentNotification end');
@@ -649,7 +650,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     $recipients[$email] = ['email' => $email, 'language' => $language];
                 }
                 // Take the language from the user or the forcedlanguage based on the configuration
-
             }
         }
 
