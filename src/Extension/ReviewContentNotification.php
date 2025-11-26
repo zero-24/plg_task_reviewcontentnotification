@@ -646,7 +646,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     } else {
                         $language =   $forcedLanguage;
                     }
-                    //avoid duplicates by using $email as key.
+
+                    // Avoid duplicates by using $email as key.
                     $recipients[$email] = ['email' => $email, 'language' => $language];
                 }
                 // Take the language from the user or the forcedlanguage based on the configuration
