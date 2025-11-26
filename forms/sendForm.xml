@@ -12,7 +12,8 @@
 				hint="2"
 				required="true"
 				validate="number"
-				filter="integer" />
+				filter="integer"
+			/>
 			<field
 				name="date_modifier_type"
 				type="list"
