@@ -496,7 +496,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
      * @param  int     $dateModifier       The date modifier setting from the task needs to be resolved to the actuall value
      * @param  array   $categoriesToCheck  The categories that should be checked
-     * @param  bool   $categoriesInclude  Include or Exclude categories
+     * @param  bool    $categoriesInclude  Include or Exclude categories
      * @param  string  $dateModifierType   The date modifier type like days, months, years
      * @param  int     $limit              Limit the result list for this task run
      *
@@ -580,7 +580,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      * Method to return the content artices that we need to notify the second time
      *
      * @param  array   $categoriesToCheck  The categories that should be checked
-     * @param  bool   $categoriesInclude  Include or Exclude categories
+     * @param  bool    $categoriesInclude  Include or Exclude categories
      * @param  int     $limit              Limit the result list for this task run
      *
      * @return array  An array of content articles that we need to notify the created users
@@ -736,7 +736,8 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     } else {
                         $language =   $forcedLanguage;
                     }
-                    //avoid duplicates by using $email as key.
+
+                    // Avoid duplicates by using $email as key.
                     $recipients[$email] = ['email' => $email, 'language' => $language];
                 }
                 // Take the language from the user or the forcedlanguage based on the configuration
