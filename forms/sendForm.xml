@@ -32,7 +32,7 @@
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_SECOND_NOTIFICATION_LABEL"
 				layout="joomla.form.field.radio.switcher"
 				default="0"
-				>
+			>
 				<option value="0">JNO</option>
 				<option value="1">JYES</option>
 			</field>
@@ -75,18 +75,19 @@
 				hint="JOPTION_SELECT_CATEGORY"
 				published="1"
 			/>
-			 <field 
-			    name="categories_include" 
-				type="radio" default="1" 
-				layout="joomla.form.field.radio.switcher" 
-				filter="integer" 
+			<field
+				name="categories_include"
+				type="radio"
+				default="1"
+				layout="joomla.form.field.radio.switcher"
+				filter="integer"
 				showon="categories_to_check!:"
-				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_CATEGORIES_INCLUDE_LBL" 
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_CATEGORIES_INCLUDE_LBL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_CATEGORIES_INCLUDE_DESC"
 			>
-          <option value="0">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_EXCLUDE</option>
-          <option value="1">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_INCLUDE</option>
-        </field>
+				<option value="0">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_EXCLUDE</option>
+				<option value="1">PLG_TASK_REVIEWCONTENTNOTIFICATION_JCATEGORY_INCLUDE</option>
+			</field>
 			<field
 				name="limit_items_per_run"
 				type="number"
@@ -112,7 +113,7 @@
 				type="list"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_LABEL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_WHO_EMAIL_DESC"
-				default='["created"]'
+				default="created"
 				validate="options"
 				multiple="true"
 				layout="joomla.form.field.list-fancy-select"
@@ -131,6 +132,19 @@
 			>
 				<option value="">PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_NONE</option>
 				<option value="user">PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_USER</option>
+			</field>
+
+			<field
+				name="aggregate_email"
+				type="radio"
+				default="0"
+				layout="joomla.form.field.radio.switcher"
+				filter="integer"
+				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATE_EMAIL_LBL"
+				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATE_EMAIL_DESC"
+			>
+				<option value="0">JNO</option>
+				<option value="1">JYES</option>
 			</field>
 		</fieldset>
 	</fields>
