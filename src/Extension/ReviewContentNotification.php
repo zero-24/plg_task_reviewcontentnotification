@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * ReviewContentNotification Task Plugin
  *
@@ -146,7 +144,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $jLanguage->load('plg_task_reviewcontentnotification', JPATH_ADMINISTRATOR, null, true, false);
 
         $currentSiteLanguage = $this->getApplication()->get('language', 'en-GB');
-
 
         foreach ($articlesToNotify as $articleId => $articleValue) {
             // Let's find out the email addresses to notify
@@ -349,8 +346,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $substitutions = array_column($recipientAggreations, 'substitutions');
             $recipient     = $recipientAggreations[0]['recipient'];
 
-
-
             $listTemplate = Text::_('PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATION_TEMPLATE');
             $list         = array_map(fn ($substitution) => str_replace(
                 [
@@ -372,14 +367,12 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                 $listTemplate
             ), $substitutions);
 
-
             $substitutions = [
                 'list'          => join("\n", $list),
                 'sitename'      => $this->getApplication()->get('sitename'),
                 'url'           => str_replace('/administrator', '', Uri::base()),
                 'date_modifier' => $dateModifier,
             ];
-
 
             try {
                 $mailer = new MailTemplate($template, $recipient['language']);
