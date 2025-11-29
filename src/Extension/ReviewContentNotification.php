@@ -90,6 +90,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      */
     private function checkReviewContentNotification(ExecuteTaskEvent $event): int
     {
+
         // Load the parameters
         $dateModifier                 = $event->getArgument('params')->date_modifier ?? '2';
         $dateModifierType             = $event->getArgument('params')->date_modifier_type ?? 'years';
@@ -125,11 +126,12 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         }
 
         $aggregations = [];
-        if ($this->getApplication()->isClient('cli') && '' === $this->getApplication()->get('live_site', '')) {
+
+        $liveSite = str_replace('/administrator', '', Uri::base());
+        //if executed from the CLi neither --live-site or $live_site (configuration.php) are set Joomla will fallback to joomla.invalid.
+        //issue a warning
+        if (str_contains($liveSite, 'https://joomla.invalid')) {
             $this->getApplication()->enqueueMessage(Text::_('PLG_TASK_REVIEWCONTENTNOTIFICATION_MISSING_LIVE_SITE'), 'warning');
-            $liveSite = '/';
-        } else {
-            $liveSite = str_replace('/administrator', '', Uri::base());
         }
 
         /*
@@ -347,7 +349,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $recipient     = $recipientAggreations[0]['recipient'];
 
             $listTemplate = Text::_('PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATION_TEMPLATE');
-            $list         = array_map(fn ($substitution) => str_replace(
+            $list         = array_map(fn($substitution) => str_replace(
                 [
                     '{TITLE}',
                     '{PUBLIC_URL}',
