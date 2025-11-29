@@ -130,7 +130,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $liveSite = str_replace('/administrator', '', Uri::base());
         //if executed from the CLi neither --live-site or $live_site (configuration.php) are set Joomla will fallback to joomla.invalid.
         //issue a warning
-        if (str_contains($liveSite, 'https://joomla.invalid')) {
+        if ($liveSite == 'https://joomla.invalid/set/by/console/application/') {
             $this->getApplication()->enqueueMessage(Text::_('PLG_TASK_REVIEWCONTENTNOTIFICATION_MISSING_LIVE_SITE'), 'warning');
         }
 
