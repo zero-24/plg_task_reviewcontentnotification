@@ -143,9 +143,9 @@
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATE_EMAIL_LBL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATE_EMAIL_DESC"
 			>
-          		<option value="0">JNO</option>
-          		<option value="1">JYES</option>
-        </field>
+				<option value="0">JNO</option>
+				<option value="1">JYES</option>
+			</field>
 		</fieldset>
 	</fields>
 </form>
