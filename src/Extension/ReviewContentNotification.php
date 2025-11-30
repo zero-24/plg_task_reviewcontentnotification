@@ -90,7 +90,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      */
     private function checkReviewContentNotification(ExecuteTaskEvent $event): int
     {
-
         // Load the parameters
         $dateModifier                 = $event->getArgument('params')->date_modifier ?? '2';
         $dateModifierType             = $event->getArgument('params')->date_modifier_type ?? 'years';
