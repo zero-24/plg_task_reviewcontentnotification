@@ -138,7 +138,7 @@
 			    name="aggregate_email"
 				type="radio"
 				default="0"
-				layout="joomla.form.field.radio.switcher" 
+				layout="joomla.form.field.radio.switcher"
 				filter="integer"
 				label="PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATE_EMAIL_LBL"
 				description="PLG_TASK_REVIEWCONTENTNOTIFICATION_AGGREGATE_EMAIL_DESC"
