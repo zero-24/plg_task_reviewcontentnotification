@@ -134,7 +134,7 @@
 				<option value="user">PLG_TASK_REVIEWCONTENTNOTIFICATION_LANGUAGE_OVERRIDE_USER</option>
 			</field>
 
-			 <field
+			<field
 			    name="aggregate_email"
 				type="radio" 
 				default="0" 
