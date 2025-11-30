@@ -234,7 +234,6 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             return Status::OK;
         }
 
-
         // Collect information and send the second eMails
         foreach ($secondNotificataionArticles as $key => $secondNotificationValue) {
             $lastNotificationDate = new Date($this->getLastNotificationDateByArticleId($secondNotificationValue->id));
