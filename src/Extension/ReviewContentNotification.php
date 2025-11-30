@@ -189,6 +189,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
                     'backend_url'   => $backendURL,
                     'date_modifier' => $dateModifier,
                 ];
+
                 if ($aggretateEmail) {
                     $aggregations[$recipient['email']] ??= [];
                     $aggregations[$recipient['email']][] = ['recipient' => $recipient, 'substitutions' => $substitutions];
