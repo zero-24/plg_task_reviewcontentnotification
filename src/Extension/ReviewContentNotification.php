@@ -91,18 +91,18 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
     private function checkReviewContentNotification(ExecuteTaskEvent $event): int
     {
         // Load the parameters
-        $dateModifier                 = $event->getArgument('params')->date_modifier ?? '2';
-        $dateModifierType             = $event->getArgument('params')->date_modifier_type ?? 'years';
-        $secondNotification           = $event->getArgument('params')->second_notification ?? 0;
-        $secondDateModifier           = $event->getArgument('params')->second_date_modifier ?? '2';
-        $secondDateModifierType       = $event->getArgument('params')->second_date_modifier_type ?? 'months';
-        $categoriesToCheck            = $event->getArgument('params')->categories_to_check ?? [];
-        $categoriesInclude            = (bool)($event->getArgument('params')->categories_include ?? true);
-        $limitItemsPerRun             = $event->getArgument('params')->limit_items_per_run ?? 20;
-        $specificEmail                = $event->getArgument('params')->email ?? '';
-        $whoEmail                     = $event->getArgument('params')->who_email ?? [];
-        $forcedLanguage               = $event->getArgument('params')->language_override ?? 'user';
-        $aggretateEmail               = (bool)($event->getArgument('params')->aggregate_email ?? false);
+        $dateModifier           = $event->getArgument('params')->date_modifier ?? '2';
+        $dateModifierType       = $event->getArgument('params')->date_modifier_type ?? 'years';
+        $secondNotification     = $event->getArgument('params')->second_notification ?? 0;
+        $secondDateModifier     = $event->getArgument('params')->second_date_modifier ?? '2';
+        $secondDateModifierType = $event->getArgument('params')->second_date_modifier_type ?? 'months';
+        $categoriesToCheck      = $event->getArgument('params')->categories_to_check ?? [];
+        $categoriesInclude      = (bool)($event->getArgument('params')->categories_include ?? true);
+        $limitItemsPerRun       = $event->getArgument('params')->limit_items_per_run ?? 20;
+        $specificEmail          = $event->getArgument('params')->email ?? '';
+        $whoEmail               = $event->getArgument('params')->who_email ?? [];
+        $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
+        $aggretateEmail         = (bool)($event->getArgument('params')->aggregate_email ?? false);
 
         // Get all articles to send notifications about
         $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $categoriesInclude, $dateModifierType, $limitItemsPerRun);
@@ -130,7 +130,9 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         // When executed from the CLI neither --live-site or $live_site (configuration.php) are set Joomla will fallback to joomla.invalid....
         // Issue a warning
         if (str_starts_with($liveSite, 'https://joomla.invalid/set/by/console/application')) {
-            $this->getApplication()->enqueueMessage(Text::_('PLG_TASK_REVIEWCONTENTNOTIFICATION_MISSING_LIVE_SITE'), 'warning');
+            $missingText = Text::_('PLG_TASK_REVIEWCONTENTNOTIFICATION_MISSING_LIVE_SITE');
+            $this->getApplication()->enqueueMessage($missingText, 'warning');
+            $this->logTask($missingText, 'warning');
         }
 
         /*
@@ -325,25 +327,41 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             // The article has been processed the second time we can mark it now with the logging database
             $this->markSecondEmailAsSendInLogTable($secondNotificationValue->id);
         }
-        $ret = $this->sendAggregations($aggregations, $dateModifier, 'plg_task_reviewcontentnotification.second_notification_mail', $jLanguage);
-        if ($ret !== Status::OK) {
-            return $ret;
+        $aggregationSendStatus = $this->sendAggregations($aggregations, $dateModifier, 'plg_task_reviewcontentnotification.second_notification_mail', $jLanguage);
+        if ($aggregationSendStatus !== Status::OK) {
+            return $aggregationSendStatus;
         }
 
-        $aggregations = [];
         $this->logTask('ReviewContentNotification end');
 
         return Status::OK;
     }
 
-    private function sendAggregations($aggregations, $dateModifier, $template, $jLanguage)
+    /**
+     * Method to check and send the notification for the articles
+     *
+     * @param array  $aggregations List of outdated articles
+     * @param int    $dateModifier Numeric presentation of check interval
+     * @param string $template     ID of the mail template to be used
+     * @param object $jLanguage    language object
+     *
+     * @return int  The routine exit code - Status.
+     *
+     * @since  __DEPLOY_VERSION__
+     * @throws \RuntimeException
+     */
+
+    private function sendAggregations(array $aggregations, int $dateModifier, string $template, object $jLanguage): int
     {
 
         if (!$aggregations) {
             return Status::OK;
         }
+        // Live site might be incorrect see the comment in checkReviewContentNotification
+        // A warning is issued their so no need to do it again.
+        $liveSite = str_replace('/administrator', '', Uri::base());
 
-        foreach ($aggregations as $email => $recipientAggreations) {
+        foreach ($aggregations as $recipientAggreations) {
             $substitutions = array_column($recipientAggreations, 'substitutions');
             $recipient     = $recipientAggreations[0]['recipient'];
 
@@ -371,7 +389,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $substitutions = [
                 'list'          => join("\n", $list),
                 'sitename'      => $this->getApplication()->get('sitename'),
-                'url'           => str_replace('/administrator', '', Uri::base()),
+                'url'           => $liveSite,
                 'date_modifier' => $dateModifier,
             ];
 
