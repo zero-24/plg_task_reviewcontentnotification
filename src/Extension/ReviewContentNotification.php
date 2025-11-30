@@ -212,9 +212,9 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             $this->addArticleToTheLogTable($articleValue->id, $secondDateModifier, $secondDateModifierType);
         }
 
-        $ret = $this->sendAggregations($aggregations, $dateModifier, 'plg_task_reviewcontentnotification.not_modified_mail', $jLanguage);
-        if ($ret !== Status::OK) {
-            return $ret;
+        $aggregationSendStatus = $this->sendAggregations($aggregations, $dateModifier, 'plg_task_reviewcontentnotification.not_modified_mail', $jLanguage);
+        if ($aggregationSendStatus !== Status::OK) {
+            return $aggregationSendStatus;
         }
 
         $aggregations = [];
