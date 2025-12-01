@@ -100,9 +100,20 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
         $categoriesInclude      = (bool)($event->getArgument('params')->categories_include ?? true);
         $limitItemsPerRun       = $event->getArgument('params')->limit_items_per_run ?? 20;
         $specificEmail          = $event->getArgument('params')->email ?? '';
-        $whoEmail               = $event->getArgument('params')->who_email ?? [];
         $forcedLanguage         = $event->getArgument('params')->language_override ?? 'user';
         $aggretateEmail         = (bool)($event->getArgument('params')->aggregate_email ?? false);
+
+        // Who should recieive the notification
+        $whoEmail = [];
+        if ((bool) ($event->getArgument('params')->who_email_created ?? true)) {
+            $whoEmail[] = 'created';
+        }
+        if ((bool) ($event->getArgument('params')->who_email_modified ?? false)) {
+            $whoEmail[] = 'modified';
+        }
+        if ((bool) ($event->getArgument('params')->who_email_super ?? false)) {
+            $whoEmail[] = 'super';
+        }
 
         // Get all articles to send notifications about
         $articlesToNotify = $this->getContentThatShouldBeNotified($dateModifier, $categoriesToCheck, $categoriesInclude, $dateModifierType, $limitItemsPerRun);
