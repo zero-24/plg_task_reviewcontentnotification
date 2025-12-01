@@ -135,7 +135,7 @@
 			</field>
 
 			<field
-			    name="aggregate_email"
+				name="aggregate_email"
 				type="radio"
 				default="0"
 				layout="joomla.form.field.radio.switcher"
