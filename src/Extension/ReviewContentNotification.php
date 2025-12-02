@@ -358,7 +358,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
      *
      * @return int  The routine exit code - Status.
      *
-     * @since  __DEPLOY_VERSION__
+     * @since  1.0.5
      * @throws \RuntimeException
      */
 
