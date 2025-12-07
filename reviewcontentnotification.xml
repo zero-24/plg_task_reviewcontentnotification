@@ -2,7 +2,7 @@
 <extension type="plugin" group="task" method="upgrade">
 	<name>plg_task_reviewcontentnotification</name>
 	<author>Tobias Zulauf</author>
-	<creationDate>2025-10-25</creationDate>
+	<creationDate>2025-12-07</creationDate>
 	<copyright>Copyright (C) 2024 Tobias Zulauf (jah-tz.de). All rights reserved.</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
 	<authorEmail>kontakt@jah-tz.de</authorEmail>
