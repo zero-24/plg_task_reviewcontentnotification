@@ -550,6 +550,7 @@ final class ReviewContentNotification extends CMSPlugin implements SubscriberInt
             ->select($db->quoteName(['id', 'title', 'created', 'modified', 'catid', 'created_by', 'state', 'language']))
             ->from($db->quoteName('#__content'))
             ->where($db->quoteName('modified') . ' < :minimum_datetime')
+            ->where($db->quoteName('modified_by') . ' <> 0')
             // Get only published articles
             ->whereIn($db->quoteName('state'), $states)
             ->setLimit($limit)
